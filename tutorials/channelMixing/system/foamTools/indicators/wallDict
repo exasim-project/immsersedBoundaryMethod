@@ -1,0 +1,63 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v1812                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      imageDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+x_min        0;
+x_max        0.003;
+
+y_min        0;
+y_max        0.0012;
+
+z_min       -0.0005;
+z_max        0.0005;
+
+/*------------------------ basic indicator settings --------------------------*/
+
+type                  imageIndicator;
+gradient              yes;              // compute and write gradient field
+
+/*------------------------ image indicator settings --------------------------*/
+
+maxRefinementLevel 2;                   // number of refinement levels
+
+// binarizationThreshold 0.5;           // if set, binarize the images to set
+                                        // relative value (Must be 0<=x<=1)
+
+// rootDir  /path/to/root;              // root path; default is case path
+// imageDir path/to/images;             // path to image directory from root
+                                        // default is
+                                        // system/foamTools/indicators/images
+
+fileExtension         "tiff";           // specify image extension
+                                        // currently supported: .tif, .tiff
+
+// Points defining the affine transformation from image to mesh coordinates
+// you specify the points in the mesh corresponding to certain specific pixels
+// For 2D, you just give 1 image and specify the left up back (lub) point to be
+// at the back of the one mesh cell in the neglected dimension
+
+meshBoundaryBox
+{
+    // x direction: l = left  = 0, r = right = nx-1
+    // y direction: t = up    = 0, b = down  = ny-1
+    // z direction: f = front = 0, b = back  = nz-1
+    
+    luf    ($x_min      $y_max      1           );  // represents ims[   0,    0,    0] ( left   up front)
+    ruf    ($x_max      $y_max      1           );  // represents ims[nx-1,    0,    0] (right   up front)
+    ldf    ($x_min      $y_min      1           );  // represents ims[   0, ny-1,    0] ( left down front)
+    lub    ($x_min      $y_max     -1           );  // represents ims[   0,    0, nz-1] ( left   up  back)
+}
+
+// ************************************************************************* //
