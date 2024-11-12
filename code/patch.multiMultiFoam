@@ -1,0 +1,557 @@
+diff --git a/.gitignore b/.gitignore
+index f0a6a90..6237310 100755
+--- a/.gitignore
++++ b/.gitignore
+@@ -7,6 +7,7 @@ lnInclude
+ 
+ // python stuff
+ __pycache__
++.venv
+ 
+ // logs
+ log.*
+diff --git a/Allwmake b/Allwmake
+index c7dc62d..45042c3 100755
+--- a/Allwmake
++++ b/Allwmake
+@@ -1,10 +1,12 @@
+ #!/bin/bash
+ 
++set -e
++
+ export MMF_PATH='$WM_PROJECT_USER_DIR/multiMultiFoam'
+ 
+ #compile multiMultiFoam
+ wmake -j8 libso src/linearAlgebra
+-wmake -j8 libso src/foamTools 
++wmake -j8 libso src/foamTools
+ wmake -j8 libso src/cfdFunctions
+ wmake -j8 libso src/fvOptions
+ wmake -j8 libso src/functionObjects
+diff --git a/src/foamTools/indicator/imageIndicator/imageIndicator.C b/src/foamTools/indicator/imageIndicator/imageIndicator.C
+index f711566..98ea0a0 100644
+--- a/src/foamTools/indicator/imageIndicator/imageIndicator.C
++++ b/src/foamTools/indicator/imageIndicator/imageIndicator.C
+@@ -42,98 +42,99 @@ const wordList imageIndicator::supportedFileExts_
+     "tiff"
+ };
+ 
+-List<word> Foam::imageIndicator::readImagePaths()
++List<string> Foam::imageIndicator::readImagePaths() const
+ {
+-    checkFileExtension();
++    const string fileExt = dict_.get<string>("fileExtension");
++    checkFileExtension(fileExt);
+ 
+-    List<word> names;
++    List<string> names;
++    fileName rootDir;
+ 
+-    const fileName rootDir
+-    (
+-        dict_.getOrDefault<word>("rootDir", mesh_.time().path())
+-    );
++    if(dict_.found("rootDir"))
++    {
++        rootDir = dict_.get<string>("rootDir");
++    }
++    else
++    {
++        rootDir = mesh_.time().path();
++        if(Pstream::parRun())
++        {
++            rootDir = rootDir / "..";
++        }
++    }
++    
+     const fileName imageDir
+     (
+         rootDir /
+-        dict_.getOrDefault<word>
++        dict_.getOrDefault<string>
+         (
+             "imageDir",
+-            "system/foamTools/indicators/images"
++            "system/foamTools/indicators/" + name_ +"Images"
+         )
+     );
+ 
+     const fileNameList images = readDir(imageDir, fileName::Type::FILE);
++
+     forAll(images, iID)
+     {
++        // Take all images with the specified extension
++        // Enables support for different image formats down the line
+         const fileName& image = images[iID];
+-        const word& ext = image.ext();
+-
+-        if(ext == fileExt_)
++        if(image.ext() == fileExt)
+         {
+             names.append(imageDir/image);
+         }
+     }
+ 
+     // Ensure that the images are in order
+-    return SortList<word>(names)();
+-}
+-
+-imageTable Foam::imageIndicator::loadImages()
+-{
+-    // check if mxa ref level is feasable (i.e. if all directions divide by it)
+-    checkMaxRefinementLevel(maxRefLevel_);
+-
+-    // Initialize ptr table
+-    imageTable ims;
+-
+-    loadFullResImages(ims);
+-    createDownsampledImages(ims);
+-
+-    return ims;
++    return SortList<string>(names)();
+ }
+ 
+-void Foam::imageIndicator::loadFullResImages(imageTable& ims)
++void Foam::imageIndicator::loadRawImages()
+ {
+-    // Initialize list for full resolution images
+-    ims.emplace(maxRefLevel_, nCells_.x()*nCells_.y()*nCells_.z());
++    // ensure all image dimensions are divisible by 2**maxRefLevel_
++    checkMaxRefinementLevel();
+ 
+-    scalarList& lst = *ims[maxRefLevel_];
++    // allocate memory for table and place list for raw images
++    images_.reset(new imageTable());
++    images_->emplace(maxRefLevel_, nx_*ny_*nz_);
+ 
++    // iterate over image paths and load images into array
++    scalarList& rawIms = *images_->at(maxRefLevel_);
+     forAll(imagePaths_, z)
+     {
++        // currently this code will fail in weird ways if we use floating point
++        // images (e.g. some tiff)
+         const CImg<int> im(imagePaths_[z].c_str());
+ 
+-        for(label y=0; y<nCells_.y(); y++)
++        for(label y=0; y<ny_; y++)
+         {
+-            for(label x=0; x<nCells_.x(); x++)
++            for(label x=0; x<nx_; x++)
+             {
+                 const label i = listIndex(x, y, z, maxRefLevel_);
+-                lst[i] = im(x, y);
++                rawIms[i] = im(x, y);
+             }
+         }
+     }
+ 
+-    normalizeList(lst);
++    normalizeList(rawIms);
+ }
+ 
+-void Foam::imageIndicator::createDownsampledImages
+-(
+-    imageTable& imTable
+-)
++void Foam::imageIndicator::createDownsampledImages()
+ {
+     for(label lev=maxRefLevel_-1; lev>=0; lev--)
+     {
+         // get reference to the next finer image
+-        scalarList& lastIm = *imTable(lev+1);
++        scalarList& finerIms = *images_->at(lev+1);
+ 
+         // initialize the list for this image
+         const label div = std::pow(2, maxRefLevel_ - lev);
+-        const label nx = nCells_.x()/div;
+-        const label ny = nCells_.y()/div;
+-        const label nz = nCells_.z() / std::pow(div, static_cast<int>(threeD_));
++        const label nx = nx_/div;
++        const label ny = ny_/div;
++        const label nz = nz_ / std::pow(div, static_cast<int>(threeD()));
+ 
+-        imTable.emplace(lev, nx*ny*nz);
+-        scalarList& currIm = *imTable(lev);
++        images_->emplace(lev, nx*ny*nz);
++        scalarList& coarserIms = *images_->at(lev);
+ 
+         for(label z=0; z<nz; z++)
+         {
+@@ -141,6 +142,8 @@ void Foam::imageIndicator::createDownsampledImages
+             {
+                 for(label x=0; x<nx; x++)
+                 {
++                    // get coordinates of all 8 finer pixels that comprise
++                    // coarser pixel
+                     const label x0 = 2*x;
+                     const label x1 = x0+1;
+                     const label y0 = 2*y;
+@@ -148,45 +151,63 @@ void Foam::imageIndicator::createDownsampledImages
+                     const label z0 = 2*z;
+                     const label z1 = z0+1;
+ 
+-                    scalar sum = lastIm[listIndex(x0, y0, z0, lev+1)]
+-                               + lastIm[listIndex(x1, y0, z0, lev+1)]
+-                               + lastIm[listIndex(x0, y1, z0, lev+1)]
+-                               + lastIm[listIndex(x1, y1, z0, lev+1)];
+-                    if(threeD_)
++                    // 4 fine pixels in first im
++                    scalar sum = finerIms[listIndex(x0, y0, z0, lev+1)]
++                               + finerIms[listIndex(x1, y0, z0, lev+1)]
++                               + finerIms[listIndex(x0, y1, z0, lev+1)]
++                               + finerIms[listIndex(x1, y1, z0, lev+1)];
++                    // 4 fine pixels in second im (3d only)
++                    if(threeD())
+                     {
+-                        sum +=lastIm[listIndex(x0, y0, z1, lev+1)]
+-                            + lastIm[listIndex(x1, y0, z1, lev+1)]
+-                            + lastIm[listIndex(x0, y1, z1, lev+1)]
+-                            + lastIm[listIndex(x1, y1, z1, lev+1)];
++                        sum +=finerIms[listIndex(x0, y0, z1, lev+1)]
++                            + finerIms[listIndex(x1, y0, z1, lev+1)]
++                            + finerIms[listIndex(x0, y1, z1, lev+1)]
++                            + finerIms[listIndex(x1, y1, z1, lev+1)];
+                     }
+-    
+-                    currIm[listIndex(x, y, z, lev)] = sum / (4 + 4*threeD_);
++
++                    // divide by 4 (2d) or 8 (3d) to retain bounds of [0, 1]
++                    coarserIms[listIndex(x, y, z, lev)] = sum / (4+4*threeD());
+                 }
+             }
+         }
+     }
+ }
+ 
+-void Foam::imageIndicator::checkMaxRefinementLevel(const label level) const
++void Foam::imageIndicator::checkMaxRefinementLevel() const
+ {
+-    const label maxDivisor = std::pow(2, level);
+-    if
+-    (
+-        nCells_.x() % maxDivisor != 0 || nCells_.y() % maxDivisor != 0
+-        || (threeD_ && nCells_.z() % maxDivisor != 0)
+-    )
+-        FatalErrorInFunction<< "At least one cell direction is not"
+-        << " divisible by " << maxDivisor
+-        << " and cannot be fully refined!" << exit(FatalError);
+-}
++    // all dimensions must be divisible by 2**maxRefLevel_
++    const label maxDivisor = std::pow(2, maxRefLevel_);
+ 
+-scalar* Foam::imageIndicator::readBinarizationThreshold() const
+-{
+-    const word key = "binarizationThreshold";
+-    if(!dict_.found(key))
+-        return nullptr;
++    // store which dimension fails for more verbose error message
++    List<bool> divisible(3);
++    bool ok = true;
++
++    for(int i=0; i<3; i++)
++    {
++        // dim i is divisible by maxDivisor or is third dim in 2d problem
++        divisible[i] = nCells_[i] % maxDivisor == 0 || (i==2 && !threeD());
++
++        // all previous dims and the current one are divisible
++        ok = ok && divisible[i];
++    }
+ 
+-    return new scalar(dict_.get<scalar>(key));
++    if(!ok)
++    {
++        string errMsg = "(";
++        for(int i=0; i<3; i++)
++        {
++            if(!divisible[i])
++            {
++                // prepend comma for all but first entry
++                if(errMsg != "(") errMsg += ", ";
++                errMsg += std::to_string(i);
++            }
++            errMsg += ")";
++        }
++        FatalErrorInFunction<< "Dimension(s) " << errMsg << " is/are not"
++        << " divisible by " << maxDivisor
++        << " and cannot be fully refined!" << exit(FatalError);
++    }
+ }
+ 
+ Vector<label> Foam::imageIndicator::getImageDimensions() const
+@@ -204,7 +225,7 @@ label Foam::imageIndicator::listIndex
+ (
+     const Vector<label>& v,
+     label refLevel
+-)
++) const
+ {
+     return listIndex(v.x(), v.y(), v.z(), refLevel);
+ }
+@@ -215,19 +236,23 @@ label Foam::imageIndicator::listIndex
+     label y,
+     label z,
+     label refLevel
+-)
++) const
+ {
+     // adjust cell number to rev level
+     const label div = std::pow(2, maxRefLevel_ - refLevel);
+-    const label nx = nCells_.x() / div;
+-    const label ny = nCells_.y() / div;
++    const label nx = nx_ / div;
++    const label ny = ny_ / div;
+ 
++    // data is stored row by row and image by image.
++    // therefore, the offset for finding the next pixel in the same column is
++    // the length of a row and the offset for finding the same pixel in the next
++    // image is the size of an image.
+     const label idx = nx*ny*z + nx*y + x;
+ 
+     return idx;
+ }
+ 
+-label Foam::imageIndicator::readRefLevel(const label celli)
++label Foam::imageIndicator::readRefLevel(const label celli) const
+ {
+     if(!cellRefLevel_)
+         return 0;
+@@ -235,7 +260,7 @@ label Foam::imageIndicator::readRefLevel(const label celli)
+     return cellRefLevel_->operator[](celli);
+ }
+ 
+-scalar Foam::imageIndicator::listMax(const scalarList& lst)
++scalar Foam::imageIndicator::listMax(const scalarList& lst) const
+ {
+     scalar max = lst[0];
+     for(label i=1; i<lst.size(); i++)
+@@ -257,15 +282,15 @@ void Foam::imageIndicator::normalizeList(scalarList& lst)
+     }
+ }
+ 
+-void Foam::imageIndicator::checkFileExtension() const
++void Foam::imageIndicator::checkFileExtension(const string ext) const
+ {
+     for(label i=0; i<supportedFileExts_.size(); i++)
+     {
+-        if(supportedFileExts_[i] == fileExt_)
++        if(supportedFileExts_[i] == ext)
+             return;
+     }
+ 
+-    FatalErrorInFunction<< "File extension " << fileExt_
++    FatalErrorInFunction<< "File extension " << ext
+     << " not supported.\nSupported extensions:\n"
+     << supportedFileExts_ << exit(FatalError);
+ }
+@@ -274,14 +299,11 @@ void Foam::imageIndicator::binarizeImages()
+ {
+     for(label i=0; i<=maxRefLevel_; i++)
+     {
+-        scalarList& im = *images_[i];
++        scalarList& ims = *images_->at(i);
+ 
+-        for(label j=0; j<im.size(); j++)
++        for(label j=0; j<ims.size(); j++)
+         {
+-            if(im[j]>=binarizationThreshold_)
+-                im[j] = 1;
+-            else
+-                im[j] = 0;
++            ims[j] = ims[j] >= binarizationThreshold_;
+         }
+     }
+ }
+@@ -294,18 +316,19 @@ Foam::imageIndicator::imageIndicator
+ )
+ :
+ indicator(name, mesh),
+-fileExt_(dict_.getOrDefault<word>("fileExtension", ".tiff")),
+ maxRefLevel_(dict_.get<label>("maxRefinementLevel")),
+-binarizationThreshold_(readBinarizationThreshold()),
++binarizationThreshold_(dict_.getOrDefault<scalar>("binarizationThreshold",0.5)),
+ cellRefLevel_(mesh_.getObjectPtr<labelIOList>("cellLevel")),
+ imagePaths_(readImagePaths()),
+ nCells_(getImageDimensions()),
+-threeD_(nCells_.z() != 1),
+-images_(loadImages()),
+-box_(dict_.subDict("meshBoundaryBox"), nCells_.x(), nCells_.y(), nCells_.z())
++nx_(nCells_.x()), ny_(nCells_.y()), nz_(nCells_.z()),
++images_(nullptr),
++box_(dict_.subDict("meshBoundaryBox"), nx_, ny_, nz_)
+ {
+-    if(binarizationThreshold_)
++    if(Pstream::master())
+     {
++        loadRawImages();
++        createDownsampledImages();
+         binarizeImages();
+     }
+ 
+@@ -314,32 +337,77 @@ box_(dict_.subDict("meshBoundaryBox"), nCells_.x(), nCells_.y(), nCells_.z())
+ 
+ // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+ 
+-Foam::imageIndicator::~imageIndicator(){}
++Foam::imageIndicator::~imageIndicator() {}
+ 
+ // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
+ 
+ void Foam::imageIndicator::update()
+ {
+-    Info<< "Updating indicator" << endl;
+-    forAll(field_, celli)
++    label nProcs = Pstream::nProcs();
++    label myProcNo = Pstream::myProcNo();
++
++    // first index: processor ID
++    // second index: processor specific cell ID
++    label nGlobalCells = 0;
++    List<label> nProcCells(nProcs);
++    List<label> offsets(nProcs);
++
++    nProcCells[myProcNo] = mesh_.C().size();
++
++    Pstream::gatherList(nProcCells);
++
++    for(int i=0; i<nProcs; i++)
++    {
++        offsets[i] = nGlobalCells;
++        nGlobalCells += nProcCells[i];
++    }
++
++    Pstream::listCombineScatter(offsets);
++    Pstream::scatter(nGlobalCells);
++
++    label offset = offsets[myProcNo];
++
++    List<vector> coords(nGlobalCells, vector(0, 0, 0));
++    List<label> refLevels(nGlobalCells, 0);
++    List<scalar> pixelValues(nGlobalCells, 0);
++
++    forAll(field_, localCellIndex)
+     {
+-        const vector& meshCoords(mesh_.C()[celli]);
+-        if(box_.contains(meshCoords))
++        coords[offset+localCellIndex] = mesh_.C()[localCellIndex];
++        refLevels[offset+localCellIndex] = readRefLevel(localCellIndex);
++    }
++
++    // collect lists
++    Pstream::listCombineGather(coords, plusEqOp<vector>());
++    Pstream::listCombineGather(refLevels, plusEqOp<label>());
++
++    if(Pstream::master())
++    {
++        forAll(coords, globalCellIndex)
+         {
+-            const label refLevel(readRefLevel(celli));
++            const vector& c = coords[globalCellIndex];
++            const label& l = refLevels[globalCellIndex];
+ 
+-            const label imIdx
+-            (
+-                listIndex
++            if(box_.contains(c))
++            {
++                const label imIdx
+                 (
+-                    box_.imageCoords(meshCoords, refLevel, maxRefLevel_),
+-                    refLevel
+-                )
+-            );
+-            field_[celli] = images_[refLevel]->operator[](imIdx);
++                    listIndex(box_.imageCoords(c, l, maxRefLevel_), l)
++                );
++                pixelValues[globalCellIndex] = images_->at(l)->operator[](imIdx);
++            }
+         }
+     }
+ 
++    // spreading lists
++    Pstream::listCombineScatter(pixelValues);
++
++    // apply pixelValues to field
++    forAll(field_, localCellIndex)
++    {
++        field_[localCellIndex] = pixelValues[offset+localCellIndex];
++    }
++
+     field_.correctBoundaryConditions();
+ }
+ 
+diff --git a/src/foamTools/indicator/imageIndicator/imageIndicator.H b/src/foamTools/indicator/imageIndicator/imageIndicator.H
+index 79e3af9..2327a9a 100644
+--- a/src/foamTools/indicator/imageIndicator/imageIndicator.H
++++ b/src/foamTools/indicator/imageIndicator/imageIndicator.H
+@@ -41,13 +41,11 @@ SourceFiles
+ #include "HashPtrTable.H"
+ #include "SortList.H"
+ #include "indicatorBox.H"
+-//#include "boost/filesystem.hpp"
+ 
+ #define cimg_display 0
+ #define cimg_use_tiff
+ #include "CImg.h"
+ 
+-//namespace fs = boost::filesystem;
+ using cimg_library::CImg;
+ 
+ using imageTable=HashPtrTable<scalarList, label>;
+@@ -67,43 +65,36 @@ class imageIndicator:public indicator
+     static const wordList supportedFileExts_;
+       
+     // private member data
+-    const word fileExt_;
+     const label maxRefLevel_;
+-    const autoPtr<scalar> binarizationThreshold_;
++    const scalar binarizationThreshold_;
+     const labelIOList* const cellRefLevel_;
+ 
+-    const wordList imagePaths_;
++    const List<string> imagePaths_;
+     const Vector<label> nCells_;
++    const label nx_, ny_, nz_;
+ 
+-    const Switch threeD_;
+-
+-    const imageTable images_;
++    autoPtr<imageTable> images_;
+     
+     const indicatorBox box_;
+ 
+     // private member functions
+-    void checkMaxRefinementLevel(const label level) const;
+-
+-    scalar* readBinarizationThreshold() const;
+-
++    List<string> readImagePaths() const;
+     Vector<label> getImageDimensions() const;
++    void checkMaxRefinementLevel() const;
+ 
+-    //fs::path composeImagePath(const word& dir);
+-    List<word> readImagePaths();
+-    imageTable loadImages();
++    void loadRawImages();
++    void createDownsampledImages();
+     void binarizeImages();
+ 
+-    void loadFullResImages(imageTable& ims);
+-    void createDownsampledImages(imageTable& imTable);
+-
+-    label listIndex(const Vector<label>& v, label refLevel);
+-    label listIndex(label x, label y, label z, label refLevel);
+-    label readRefLevel(const label celli);
++    label listIndex(const Vector<label>& v, label refLevel) const;
++    label listIndex(label x, label y, label z, label refLevel) const;
++    label readRefLevel(const label celli) const;
+ 
+-    scalar listMax(const scalarList& lst);
++    scalar listMax(const scalarList& lst) const;
+     void normalizeList(scalarList& lst);
+ 
+-    void checkFileExtension() const;
++    inline bool threeD() const {return nCells_.z() != 1;}
++    void checkFileExtension(const string ext) const;
+ 
+   protected:    
+ 

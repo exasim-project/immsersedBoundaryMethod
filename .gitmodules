@@ -1,0 +1,4 @@
+[submodule "code/multiMultiFoam"]
+	path = code/multiMultiFoam
+	url = git@gitlab.kit.edu:kit/istm/research/multimultifoam.git
+	branch = add_cfdFunctions_review

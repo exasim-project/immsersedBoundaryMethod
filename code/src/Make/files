@@ -1,0 +1,3 @@
+foamTools/ofTerms/soIBM/soIBMRunTime.C
+
+LIB = $(FOAM_USER_LIBBIN)/libsoIBM
