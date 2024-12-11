@@ -1,3 +1,4 @@
 foamTools/ofTerms/soIBM/soIBMRunTime.C
+ibmGaussLaplacianScheme/ibmGaussLaplacianSchemeRunTime.C
 
 LIB = $(FOAM_USER_LIBBIN)/libsoIBM

@@ -37,7 +37,7 @@ divSchemes
 
 laplacianSchemes
 {
-    default         Gauss linear corrected;
+    default         IBMGauss linear corrected;
 }
 
 interpolationSchemes
