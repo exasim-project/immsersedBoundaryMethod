@@ -6,8 +6,10 @@ path=__file__.split('/compile')[0]
 if not os.path.isfile(f'{path}/code/multiMultiFoam/Allwmake'):
     subprocess.run(['git', 'submodule', 'update', '--init'])
     subprocess.run(['git', 'apply', '../patch.multiMultiFoam'], cwd=f'{path}/code/multiMultiFoam')
+    subprocess.run(['git', 'apply', '../patch.multiDimAMR'], cwd=f'{path}/code/multiDimAMR')
 
 print(f'{path}/code/multiMultiFoam')
 
 subprocess.run(['./Allwmake'], cwd=f'{path}/code/multiMultiFoam')
+subprocess.run(['./Allwmake'], cwd=f'{path}/code/multiDimAMR')
 subprocess.run(['wmake', '-j8', 'libso'], cwd=f'{path}/code/src')

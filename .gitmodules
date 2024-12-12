@@ -2,3 +2,7 @@
 	path = code/multiMultiFoam
 	url = git@gitlab.kit.edu:kit/istm/research/multimultifoam.git
 	branch = add_cfdFunctions_review
+[submodule "code/multiDimAMR"]
+	path = code/multiDimAMR
+	url = https://github.com/HenningScheufler/multiDimAMR.git
+	branch = v2012
