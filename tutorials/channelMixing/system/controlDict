@@ -20,6 +20,7 @@ cfdFunctions    (flow);
 libs
 (
     "dynamicLoadBalanceFvMesh"
+    "soIBM"
 );
 
 startFrom       startTime; //latestTime;
