@@ -8,3 +8,6 @@ lnInclude
 // python stuff
 __pycache__
 .venv
+
+code/bin
+code/lib
