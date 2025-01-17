@@ -1,0 +1,137 @@
+codedFunctions
+{
+    libs                (utilityFunctionObjects);
+
+    type                coded;
+    name                codedFunctions;
+    executeControl      timeStep;
+    
+    gradURef            8e01;
+
+    codeInclude
+    #{
+        #include "fvCFD.H"
+    #};
+
+    codeOptions
+    #{
+        
+    #};
+
+    codeLibs
+    #{
+
+    #};
+
+    codeData
+    #{
+        const dictionary& dict = mesh().time().controlDict().subDict("functions").subDict("codedFunctions");
+
+        label refInterval = 0;
+        label refCount = 0;
+
+        volVectorField& U = mesh().lookupObjectRef<volVectorField>("U");
+        dimensionedScalar refGradU = dimensionedScalar(U.dimensions()/dimLength, dict.getOrDefault("gradURef", 1.0));
+    #};
+
+    localCode
+    #{
+        volScalarField& avg(volScalarField& field, const label iter)
+        {
+            if(iter == 0){ return field; }
+            field = fvc::average(fvc::interpolate(field));
+            return avg(field, iter-1);
+        }
+
+        volVectorField& avg(volVectorField& field, const label iter)
+        {
+            if(iter == 0){ return field; }
+            field = fvc::average(fvc::interpolate(field));
+            return avg(field, iter-1);
+        }
+    #};
+
+    codeRead
+    #{
+        IOobject dynMeshIO("dynamicMeshDict", mesh().time().constant(), mesh(), IOobject::MUST_READ);
+        IOdictionary dynMeshDictIO(dynMeshIO);
+        dictionary dynMeshDict(dynMeshDictIO);
+        
+        refInterval = dynMeshDict.getOrDefault<label>("refineInterval", 1);
+
+        if(!mesh().objectRegistry::foundObject<volScalarField>("gradU"))
+        {
+            autoPtr<volScalarField> gradUPtr;
+            gradUPtr.reset
+            (
+                new volScalarField
+                (
+                    IOobject
+                    (
+                        "gradU",
+                        mesh().time().timeName(),
+                        mesh(),
+                        IOobject::NO_READ,
+                        IOobject::NO_WRITE
+                    ),
+                    mesh(),
+                    dimensionedScalar(dimless, 0)
+                )
+            );
+            gradUPtr->store(gradUPtr);
+        }
+
+        if(!mesh().objectRegistry::foundObject<volScalarField>("wallSurface"))
+        {
+            autoPtr<volScalarField> wallSurfacePtr;
+            wallSurfacePtr.reset
+            (
+                new volScalarField
+                (
+                    IOobject
+                    (
+                        "wallSurface",
+                        mesh().time().timeName(),
+                        mesh(),
+                        IOobject::NO_READ,
+                        IOobject::NO_WRITE
+                    ),
+                    mesh(),
+                    dimensionedScalar(dimless, 0)
+                )
+            );
+            wallSurfacePtr->store(wallSurfacePtr);
+        }
+    #};
+
+    codeExecute
+    #{
+        const volScalarField& wallIndicator = mesh().lookupObject<volScalarField>("wallIndicator");
+
+        volScalarField& gradU = mesh().lookupObjectRef<volScalarField>("gradU");
+        volScalarField& wallSurface = mesh().lookupObjectRef<volScalarField>("wallSurface");
+
+        if(mesh().changing()){ refCount = 0; }
+        if(refCount >= refInterval-1)
+        { 
+            gradU = mag(fvc::grad(U))/refGradU;
+            avg(gradU, 2);
+            
+            wallSurface = wallIndicator;
+            avg(wallSurface, 1);
+        }
+        refCount ++;
+
+        if(mesh().time().outputTime())
+        { 
+            gradU = mag(fvc::grad(U))/refGradU;
+            avg(gradU, 2);
+            gradU.write(); 
+
+            wallSurface = wallIndicator;
+            avg(wallSurface, 1);
+            wallSurface.write();
+        }
+    #};
+}
+// ************************************************************************* //
