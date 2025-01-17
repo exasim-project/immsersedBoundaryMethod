@@ -42,7 +42,9 @@ namespace fv
 {
  
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
- 
+
+// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
+
 template<class Type, class GType>
 tmp<fvMatrix<Type>>
 ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
@@ -52,21 +54,130 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
     const GeometricField<Type, fvPatchField, volMesh>& vf
 )
 {
-    Info << "Bin im ibmGaussLapacianScheme" << endl;
+    //Info << "Bin im ibmGaussLapacianScheme" << endl;
     tmp<fvMatrix<Type>> tfvm
     (
         new fvMatrix<Type>
         (
             vf,
-            deltaCoeffs.dimensions()*gammaMagSf.dimensions()*vf.dimensions()
+            deltaCoeffs.dimensions()*gammaMagSf.dimensions()*vf.dimensions() //gammaMagSf = gamma*(surface area)
         )
     );
     fvMatrix<Type>& fvm = tfvm.ref();
- 
+
     fvm.upper() = deltaCoeffs.primitiveField()*gammaMagSf.primitiveField();
-    Info << "IBM Matrix berechnet!" << endl;
     fvm.negSumDiag();
+
+    const fvMesh& mesh = this->mesh();
  
+    const surfaceVectorField Sn(mesh.Sf()/mesh.magSf()); //warum keine Referenz?
+    
+    volScalarField vofField_    //später mit Indicator definieren
+    (
+        IOobject
+        (
+            "vof",
+            vf.instance(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar("vof", dimless, 1.0)
+    );
+
+    forAll(vofField_,i){
+        if(i<250*5 || i>=(vofField_.size()-250*5)){vofField_[i] = 0.0;}
+    }
+
+    const scalar& delta_quotient_ = 0.01;
+    
+    surfaceScalarField vofGrad = fvc::snGrad(vofField_);
+
+    //Korrekturterm:
+
+    //Annahme: vofGrad ist immer entweder 0 oder 1/delx
+    // Falsche Berechnung der Korrekturen
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+    /*surfaceScalarField surfCentreCorrection(gammaMagSf*(1-delta_quotient_)*mag(vofGrad));
+    surfaceScalarField faceCorrection(gammaMagSf*mag(vofGrad)); //deltaCoeffs*gammaMagSf*(vofGrad/deltaCoeffs)
+
+    volScalarField volCentreCorrection(vofField_);
+    forAll(mesh.C(), celli){
+        volCentreCorrection[celli] = 0.0;
+        forAll(mesh.cells()[celli], i){
+            const label& facei = mesh.cells()[celli][i];
+            volCentreCorrection[celli] += surfCentreCorrection[facei];
+            //Info << mesh.cells()[celli][i] << endl;
+        }
+    }
+    fvm.diag() += volCentreCorrection.primitiveField()*vofField_.primitiveField();*/
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+    //Ansonsten:
+    // Korrekte Berechnung
+
+    surfaceScalarField surfCentreCorrection(deltaCoeffs*gammaMagSf*(1-delta_quotient_));
+    surfaceScalarField faceCorrection(deltaCoeffs*gammaMagSf);
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+    forAll(mesh.Sf(), facei){
+        if(mag(vofGrad[facei])<1e-8){
+            surfCentreCorrection[facei] = 0.0;
+            faceCorrection[facei] = 0.0;
+        }else{
+            if(vofField_[mesh.faceOwner()[facei]]==1){ //Korrektur Fluid oder Solid zuweisen?
+                fvm.diag()[mesh.faceOwner()[facei]] += surfCentreCorrection[facei];
+            }else{
+                fvm.diag()[mesh.faceNeighbour()[facei]] += surfCentreCorrection[facei];
+            }
+        }
+    }
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+    //Oder ohne zweite if-Abfrage:
+    // Simulation unterbricht mit: [stack trace] Floating point exception
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+    /*forAll(mesh.Sf(), facei){
+        if(mag(vofGrad[facei])<1e-8){
+            surfCentreCorrection[facei] = 0.0;
+            faceCorrection[facei] = 0.0;
+        }
+    }
+
+    volScalarField volCentreCorrection(vofField_);
+
+    forAll(mesh.C(), celli){
+        volCentreCorrection[celli] = 0.0;
+        forAll(mesh.cells()[celli], facei){
+            const label& facei = mesh.cells()[celli][i];
+            volCentreCorrection[celli] += surfCentreCorrection[facei];
+        }
+    }
+    
+    fvm.diag() += volCentreCorrection.primitiveField()*vofField_;*/
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+    fvm.upper() -= faceCorrection.primitiveField();
+    
+    Info << "IBM Matrix berechnet!" << endl;
+
+    /*
+    Owner ist bei einem face immer der mit dem niedrigeren Index, neighbor der mit dem höheren.
+    Gehe faces durch und schaue, ob zwischen owner und neighbor flüssige zu feste Phase wechselt.
+    Wenn ja:
+        fvm.upper[face] -= deltaCoeffs[face].value()*gammaMagSf[face].value();
+
+        fvm.diag() += deltaCoeffs[face].value()*gammaMagSf[face].value()* (1-delta_quotient);
+    */
+
+    //  Berechnung hinter negSumDiag(): 
+    /*for (register label face=0; face<l.size(); face++)
+    {
+        Diag[l[face]] -= Lower[face];
+        Diag[u[face]] -= Upper[face];
+    }*/
+    
     forAll(vf.boundaryField(), patchi)
     {
         const fvPatchField<Type>& pvf = vf.boundaryField()[patchi];
@@ -91,7 +202,7 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
     return tfvm;
 }
  
- 
+
 template<class Type, class GType>
 tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
 ibmGaussLaplacianScheme<Type, GType>::gammaSnGradCorr
@@ -135,14 +246,14 @@ ibmGaussLaplacianScheme<Type, GType>::gammaSnGradCorr
  
  
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
- 
+
 template<class Type, class GType>
 tmp<GeometricField<Type, fvPatchField, volMesh>>
 ibmGaussLaplacianScheme<Type, GType>::fvcLaplacian
 (
     const GeometricField<Type, fvPatchField, volMesh>& vf
 )
-{
+{   
     const fvMesh& mesh = this->mesh();
  
     tmp<GeometricField<Type, fvPatchField, volMesh>> tLaplacian
@@ -182,10 +293,10 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacian
         vf
     );
     fvMatrix<Type>& fvm = tfvm.ref();
- 
+    
     tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> tfaceFluxCorrection
         = gammaSnGradCorr(SfGammaCorr, vf);
- 
+    
     if (this->tsnGradScheme_().corrected())
     {
         tfaceFluxCorrection.ref() +=
@@ -202,7 +313,7 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacian
     return tfvm;
 }
  
- 
+
 template<class Type, class GType>
 tmp<GeometricField<Type, fvPatchField, volMesh>>
 ibmGaussLaplacianScheme<Type, GType>::fvcLaplacian

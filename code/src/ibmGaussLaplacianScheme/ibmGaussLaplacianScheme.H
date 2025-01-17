@@ -42,6 +42,7 @@ SourceFiles
 #define ibmGaussLaplacianScheme_H
  
 #include "laplacianScheme.H"
+#include "indicator.H"
  
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
  
@@ -62,6 +63,10 @@ class ibmGaussLaplacianScheme
 :
     public fv::laplacianScheme<Type, GType>
 {
+protected:
+    //const scalar& delta_quotient_;
+    //volScalarField& fovField_;
+
     // Private Member Functions
  
         tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> gammaSnGradCorr
@@ -86,12 +91,15 @@ public:
     // Constructors
  
         //- Construct null
+        //ibmGaussLaplacianScheme(const fvMesh& mesh);
         ibmGaussLaplacianScheme(const fvMesh& mesh)
         :
             laplacianScheme<Type, GType>(mesh)
         {}
  
+        
         //- Construct from Istream
+        //ibmGaussLaplacianScheme(const fvMesh& mesh, Istream& is);
         ibmGaussLaplacianScheme(const fvMesh& mesh, Istream& is)
         :
             laplacianScheme<Type, GType>(mesh, is)
@@ -115,7 +123,7 @@ public:
  
     // Member Functions
  
-        static tmp<fvMatrix<Type>> fvmLaplacianUncorrected
+        tmp<fvMatrix<Type>> fvmLaplacianUncorrected
         (
             const surfaceScalarField& gammaMagSf,
             const surfaceScalarField& deltaCoeffs,

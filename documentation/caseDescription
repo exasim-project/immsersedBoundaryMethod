@@ -1,0 +1,8 @@
+channelMixing & mmfIbm: other cases          
+
+refChannel:             reference case with standard channel flow.
+wallIBMChannel:         channel flow with IBM walls. U inlet is a distribution due to of unstabilities between inlet and ibm.
+laplacianIBMChannel:    channel flow with new IBMGauss laplacian scheme. Same inlet as wallIBMChannel.
+testCase:               test case with laplacianIBMChannel as basis.
+
+ToDo: Connect IBMGaussLaplacianScheme with indicator and distance.
