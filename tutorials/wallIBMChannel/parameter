@@ -1,0 +1,60 @@
+// #### geometrical values ##### //
+l            0.001; //channel height
+ibmThickness 0.0002;
+
+x_min        0.0;
+x_max        0.003;
+
+y_min        0.0;
+y_max        #eval "$l + $ibmThickness";
+
+z_min       -0.00005;
+z_max        0.00005;
+
+cellSize    #eval "$y_max/40";
+
+nx          #eval "ceil(($x_max-$x_min)/$cellSize)";
+ny          #eval "ceil(($y_max-$y_min)/$cellSize)";
+nz          1;
+
+// #### fluid properties #### // 
+// electrolyte
+nu_electrolyte      1e-06; 
+rho_electrolyte     1e+03;
+
+// red - here: NFP-H
+nu_red          1.10e-06; // first research: 1.10e-09 for 25° but for faster simulation -> e-04
+
+// blue - here: MeOH
+nu_blue         1.65e-04;  // first research: 1.65e-09 for 25° but for faster simulation -> e-04
+
+// purple - here: NFP-OMe
+nu_purple       $nu_red; // assume both big molecules -> same diffusion coefficient as red 
+
+
+// #### Re ####//
+Ux             1e-02; 
+
+// electrochemistry
+// potential 
+voltage_v       1.4;     // V
+
+
+
+
+
+T_bipolarPlate_v    353;
+T_flow_v            #eval "$T_bipolarPlate_v + 2";       
+
+k_ptl_v             1e-06;
+
+sigma_ptl_v         790.4;    
+sigma_bp_v          13513.51;   
+
+current_v           -3000; // A/m^2 
+
+exchange_current_v  4.602e+01;
+
+
+c_O2_ref_v          56.875; //0.56875;
+c_O2_v              $c_O2_ref_v;
