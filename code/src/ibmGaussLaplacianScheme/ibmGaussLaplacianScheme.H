@@ -122,7 +122,9 @@ public:
  
  
     // Member Functions
- 
+        
+        vector bisektion(vector a, vector b, int max_iter, vector centre, scalar radius);
+
         tmp<fvMatrix<Type>> fvmLaplacianUncorrected
         (
             const surfaceScalarField& gammaMagSf,

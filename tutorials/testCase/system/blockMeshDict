@@ -23,7 +23,7 @@ y_max          1.0;
 z_min          0.0;
 z_max          0.1;
 
-cellSize    #eval "$y_max/50";
+cellSize    #eval "$y_max/100";
 
 nx          #eval "ceil(($x_max-$x_min)/$cellSize)";
 ny          #eval "ceil(($y_max-$y_min)/$cellSize)";

@@ -22,7 +22,7 @@ velocity                U;
 flux                    phi;
 pressure                p;
 
-fieldCoeffs             constProperties;
+//fieldCoeffs             constProperties;
 densityField            rho;
 
 equation                (convection diffusion);

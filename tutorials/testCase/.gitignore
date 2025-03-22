@@ -18,3 +18,5 @@ dynamicCode
 constant/polyMesh
 constant/cellToRegion
 *.foam
+images
+postProcessing
