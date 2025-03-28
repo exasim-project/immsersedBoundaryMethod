@@ -16,6 +16,25 @@ FoamFile
 
 solvers
 {
+    "alpha.water.*"
+    {
+        nAlphaCorr      2;
+        nAlphaSubCycles 1;
+        cAlpha          3;
+
+        advectionScheme         isoAdvection;
+        reconstructionScheme    plicRDF;
+
+        MULESCorr       yes;
+        nLimiterIter    3;
+
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        tolerance       1e-8;
+        relTol          0;
+        minIter         3;
+    }
+
     p
     {
         solver          GAMG;

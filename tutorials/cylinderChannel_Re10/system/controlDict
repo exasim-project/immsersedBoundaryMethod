@@ -21,13 +21,14 @@ libs
 (
     "dynamicLoadBalanceFvMesh"
     "soIBM"
+    "libVoF"
 );
 
 startFrom       startTime; //latestTime;
 
 startTime       0;
 
-stopAt          endTime;
+stopAt          writeNow;
 
 endTime         200;
 
@@ -57,7 +58,68 @@ maxCo           0.5;
 
 functions
 {
-    
+    vof
+    {
+        libs ("libutilityFunctionObjects.so");
+        type coded;
+        name vof;
+
+        writeControl timeStep;
+
+        codeInclude
+        #{
+            #include "advectionSchemes.H"
+        #};
+
+        codeOptions
+        #{
+            -I../../../../code/twoPhaseFlow/ThirdParty/src/VoF/lnInclude \
+        #};
+
+        codeData
+        #{
+            autoPtr<advectionSchemes> advector;
+        #};
+
+        codeRead
+        #{
+            if(!mesh().foundObject<volScalarField>("alpha.water"))
+            {
+                autoPtr<volScalarField> alpha
+                (
+                    new volScalarField
+                    (
+                        IOobject
+                        (
+                            "alpha.water",
+                            mesh().time().timeName(),
+                            mesh(),
+                            IOobject::MUST_READ,
+                            IOobject::AUTO_WRITE
+                        ),
+                        mesh()
+                    )
+                );
+                alpha->store(alpha);
+            }
+
+            if(!advector.valid())
+            {
+                volScalarField& alpha1 = mesh().lookupObjectRef<volScalarField>("alpha.water");
+                volVectorField& U = mesh().lookupObjectRef<volVectorField>("U");
+                surfaceScalarField& phi = mesh().lookupObjectRef<surfaceScalarField>("phi");
+
+                advector.reset(advectionSchemes::New(alpha1,phi,U));
+                advector->surf().reconstruct();
+            }
+        #};
+
+        codeExecute
+        #{
+
+        #};
+
+    }
 }
 
 
