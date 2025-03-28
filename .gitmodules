@@ -6,3 +6,7 @@
 	path = code/multiDimAMR
 	url = https://github.com/HenningScheufler/multiDimAMR.git
 	branch = v2012
+[submodule "code/twoPhaseFlow"]
+	path = code/twoPhaseFlow
+	url = git@gitlab.kit.edu:kit/istm/research/multiMultiFoam_thirdParty/twoPhaseFlow.git
+	branch = main
