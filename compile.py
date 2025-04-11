@@ -12,4 +12,5 @@ print(f'{path}/code/multiMultiFoam')
 
 subprocess.run(['./Allwmake'], cwd=f'{path}/code/multiMultiFoam')
 subprocess.run(['./Allwmake'], cwd=f'{path}/code/multiDimAMR')
+subprocess.run(['./Allwmake'], cwd=f'{path}/code/twoPhaseFlow')
 subprocess.run(['wmake', '-j8', 'libso'], cwd=f'{path}/code/src')

@@ -3,6 +3,8 @@ cd "${0%/*}" || exit                                # Run from this directory
 . ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
 #------------------------------------------------------------------------------
 
+touch foam.foam
+
 #runApplication blockMesh
 
 runApplication ../../code/bin/multiMultiFoam
@@ -10,5 +12,3 @@ runApplication ../../code/bin/multiMultiFoam
 #postProcess -func sample -latestTime
 
 #python3 scripts/postProcessing.py
-
-touch foam.foam

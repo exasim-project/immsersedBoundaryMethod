@@ -46,9 +46,18 @@ namespace fv
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-template<class Type, class GType>
-vector ibmGaussLaplacianScheme<Type, GType>::bisektion(vector a, vector b, int max_iter, vector centre, scalar radius) {
-    
+    // Bisektionsverfahren:
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+/*template<class Type, class GType>
+vector ibmGaussLaplacianScheme<Type, GType>::bisektion
+(
+    vector a,
+    vector b,
+    int max_iter,
+    vector centre,
+    scalar radius
+)
+{    
     vector c;
     
     for (int i = 0; i < max_iter; ++i) {
@@ -66,7 +75,26 @@ vector ibmGaussLaplacianScheme<Type, GType>::bisektion(vector a, vector b, int m
     }
 
     return c;
+}*/
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+    // Line-Plane Intersection:
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+template<class Type, class GType>
+scalar ibmGaussLaplacianScheme<Type, GType>::intersection
+(
+    const vector& c_1, 
+    const vector& c_2, 
+    const vector& c_E, 
+    const vector& normal
+)
+{
+    const scalar& dividend = normal & (c_E - c_1);
+    const scalar& divisor = normal & (c_2 - c_1);
+    
+    return dividend/(divisor + SMALL);
 }
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 template<class Type, class GType>
 tmp<fvMatrix<Type>>
@@ -91,25 +119,10 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
     fvm.negSumDiag();
 
     const fvMesh& mesh = this->mesh();
-    
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-    volScalarField vofField_    // Später mit Indicator definieren
-    (
-        IOobject
-        (
-            "vof",
-            vf.instance(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedScalar("vof", dimless, 1.0)
-    );
 
     // cylinder channel:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-    const vector& centre = vector(0, 0, 0);
+    /*const vector& centre = vector(0, 0, 0);
     const scalar& radius = 0.5;
     forAll(vofField_, i){
         if(
@@ -118,10 +131,7 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
             vofField_[i] = 0.0;
         }
     }
-    if(mesh.time().outputTime()){ vofField_.write(); }
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
+    if(mesh.time().outputTime()){ vofField_.write(); }*/
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
     // sin channel in phase:
@@ -174,11 +184,44 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
         }
     }*/
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-    
-    surfaceScalarField vofGrad = fvc::snGrad(vofField_);
+
+
+    // Dinge die in Constructor verschoben wurden:
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+    /*autoPtr<advectionSchemes> advector_;
+    volScalarField& alpha1 = mesh.lookupObjectRef<volScalarField>("alpha.water");
+    volVectorField& U = mesh.lookupObjectRef<volVectorField>("U");
+    surfaceScalarField& phi = mesh.lookupObjectRef<surfaceScalarField>("phi");
+
+    advector_.reset(advectionSchemes::New(alpha1,phi,U));
+    advector_->surf().reconstruct();
+
+    volScalarField& vofField_ = alpha1;
+
+    volScalarField vofField_    // Später mit Indicator definieren
+    (
+        IOobject
+        (
+            "vof",
+            vf.instance(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar("vof", dimless, -1.0)
+    );
+
+    forAll(mesh.C(), celli){
+        if(alpha1[celli] < 0.5){
+            vofField_[celli] = 0;
+        }else{
+            vofField_[celli] = 1;
+        }
+    }
 
     //const scalar& delta_quotient_ = 2; // Werte zwischen 1 und unendlich
-    surfaceScalarField delta_quotient_    // Später mit Indicator definieren
+    surfaceScalarField delta_quotient_    // in Constructor verlegt
     (
         IOobject
         (
@@ -189,8 +232,145 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
             IOobject::AUTO_WRITE
         ),
         mesh,
-        dimensionedScalar("delta_quotient", dimless, 1e10)
+        dimensionedScalar("delta_quotient", dimless, 1)
     );
+
+    const volVectorField& interfaceNormal_ = advector_->surf().normal();
+    const volVectorField& interfaceCentre_ = advector_->surf().centre();
+    const boolList& isInterfaceCell_ = advector_->surf().interfaceCell();
+    
+    surfaceScalarField vofGrad_ = fvc::snGrad(vofField_);*/
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+    // Distance calculation:
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+    volScalarField interfaceDistanceX_
+    (
+        IOobject
+        (
+            "interfaceDistance_X",
+            vofField_.instance(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar("interfaceDistance_X", dimLength, -1)
+    );
+    volScalarField interfaceDistanceY_
+    (
+        IOobject
+        (
+            "interfaceDistance_Y",
+            vofField_.instance(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar("interfaceDistance_Y", dimLength, -1)
+    );    
+
+    const vector& x = vector(1, 0, 0);
+    const vector& y = vector(0, 1, 0);
+    
+    scalar dist_ownerInterface;
+    scalar dist_neighbourInterface;
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+    forAll(delta_quotient_, i){
+
+        if(
+            vofGrad_[i] != 0
+        ){
+            
+            const label& owneri = mesh.faceOwner()[i];
+            const vector& cOwneri = mesh.C()[owneri];
+            const vector& interfaceNormalOwner = interfaceNormal_[owneri];
+            const vector& interfaceCentreOwner = interfaceCentre_[owneri];
+
+            const label& neighbouri = mesh.faceNeighbour()[i];
+            const vector& cNeighbouri = mesh.C()[neighbouri];
+            const vector& interfaceNormalNeighbour = interfaceNormal_[neighbouri];
+            const vector& interfaceCentreNeighbour = interfaceCentre_[neighbouri];
+
+            dist_ownerInterface = 1e10;
+            dist_neighbourInterface = 1e10;
+
+            const scalar& isYdir = (cOwneri-cNeighbouri) & x;
+            const scalar& isXdir = (cOwneri-cNeighbouri) & y;
+
+            if(
+                vofField_[owneri]   ==  1
+            ){  // Dann muss Owner korrigiert werden.
+
+                if(isInterfaceCell_[owneri]){
+                    dist_ownerInterface = intersection(cOwneri, cNeighbouri, interfaceCentreOwner, interfaceNormalOwner);
+                }
+                if(isInterfaceCell_[neighbouri]){
+                    dist_neighbourInterface = intersection(cOwneri, cNeighbouri, interfaceCentreNeighbour, interfaceNormalNeighbour);
+                }
+
+                if(
+                    dist_ownerInterface <= dist_neighbourInterface &&
+                    dist_ownerInterface >= 0
+                ){
+                    delta_quotient_[i] = 1/(dist_ownerInterface + SMALL);
+
+                    if(mag(isYdir) < 1e-7){
+                        interfaceDistanceY_[owneri] = dist_ownerInterface / deltaCoeffs[i];
+                    }
+                    if(mag(isXdir) < 1e-7){
+                        interfaceDistanceX_[owneri] = dist_ownerInterface / deltaCoeffs[i];
+                    }
+                }else{
+                    delta_quotient_[i] = 1/(dist_neighbourInterface + SMALL);
+
+                    if(mag(isYdir) < 1e-7){
+                        interfaceDistanceY_[owneri] = dist_neighbourInterface / deltaCoeffs[i];
+                    }
+                    if(mag(isXdir) < 1e-7){
+                        interfaceDistanceX_[owneri] = dist_neighbourInterface / deltaCoeffs[i];
+                    }
+                }
+            }else{  // Dann muss Neighbour korrigiert werden.
+
+                if(isInterfaceCell_[owneri]){
+                    dist_ownerInterface = intersection(cNeighbouri, cOwneri, interfaceCentreOwner, interfaceNormalOwner);
+                }
+                if(isInterfaceCell_[neighbouri]){
+                    dist_neighbourInterface = intersection(cNeighbouri, cOwneri, interfaceCentreNeighbour, interfaceNormalNeighbour);
+                }
+                
+                if(
+                    dist_ownerInterface <= dist_neighbourInterface &&
+                    dist_ownerInterface >= 0
+                ){
+                    delta_quotient_[i] = 1/(dist_ownerInterface + SMALL);
+
+                    if(mag(isYdir) < 1e-7){
+                        interfaceDistanceY_[neighbouri] = dist_ownerInterface / deltaCoeffs[i];
+                    }
+                    if(mag(isXdir) < 1e-7){
+                        interfaceDistanceX_[neighbouri] = dist_ownerInterface / deltaCoeffs[i];
+                    }
+                }else{
+                    delta_quotient_[i] = 1/(dist_neighbourInterface + SMALL);
+                    
+                    if(mag(isYdir) < 1e-7){
+                        interfaceDistanceY_[neighbouri] = dist_neighbourInterface / deltaCoeffs[i];
+                    }
+                    if(mag(isXdir) < 1e-7){
+                        interfaceDistanceX_[neighbouri] = dist_neighbourInterface / deltaCoeffs[i];
+                    }
+                }
+            }
+        }
+    }
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
     /*scalar del_x_1 = 0.0;   // x-Abstand zu Cellcentre des unteren Randes
     scalar del_x_2 = 0.0;   // x-Abstand zu Cellcentre des oberen Randes
@@ -201,9 +381,9 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
 
     // cylinder channel:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-    forAll(delta_quotient_, i){
+    /*forAll(delta_quotient_, i){
 
-        if(vofGrad[i] != 0.0){                          // nur faces, die auch Abstand benötigen
+        if(vofGrad_[i] != 0.0){                          // nur faces, die auch Abstand benötigen
 
             const label& faceOwneri = mesh.faceOwner()[i];
             const vector& cOwneri = mesh.C()[faceOwneri];
@@ -222,14 +402,14 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
                 delta_quotient_[i] = delX/mag(cNeighbouri - cylinderIntersection);
             }
         }
-    }
+    }*/
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
     // channel with angle:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
     /*forAll(delta_quotient_, i){
 
-        if(vofGrad[i] != 0.0){                          // nur faces, die auch Abstand benötigen
+        if(vofGrad_[i] != 0.0){                          // nur faces, die auch Abstand benötigen
 
             const label& faceOwneri = mesh.faceOwner()[i];
             const vector& cOwneri = mesh.C()[faceOwneri];
@@ -302,7 +482,7 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
     /*forAll(delta_quotient_, i){
 
-        if(vofGrad[i] != 0.0){                          // nur faces, die auch Abstand benötigen
+        if(vofGrad_[i] != 0.0){                          // nur faces, die auch Abstand benötigen
 
             const label& faceOwneri = mesh.faceOwner()[i];
             const vector& cOwneri = mesh.C()[faceOwneri];
@@ -425,7 +605,7 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
     /*forAll(delta_quotient_, i){
 
-        if(vofGrad[i] != 0.0){                          // nur faces, die auch Abstand benötigen
+        if(vofGrad_[i] != 0.0){                          // nur faces, die auch Abstand benötigen
 
             const label& faceOwneri = mesh.faceOwner()[i];
             const vector& cOwneri = mesh.C()[faceOwneri];
@@ -531,12 +711,24 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
 
     //Korrekturterm:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-    surfaceScalarField surfCentreCorrection(gammaMagSf*(1.0-delta_quotient_)*mag(vofGrad));
-    surfaceScalarField faceCorrection(gammaMagSf*mag(vofGrad));
+    surfaceScalarField surfCentreCorrection(gammaMagSf*(1.0-delta_quotient_)*mag(vofGrad_)); // benötigt binäres Feld
+    surfaceScalarField faceCorrection(gammaMagSf*mag(vofGrad_)); // benötigt binäres Feld
 
-    volScalarField volCentreCorrection(vofField_);
+    volScalarField volCentreCorrection
+    (
+        IOobject
+        (
+            "volCentreCorrection",
+            vf.instance(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar("volCentreCorrection", dimless, 0.0)
+    );
+
     forAll(mesh.C(), celli){
-        volCentreCorrection[celli] = 0.0;
         forAll(mesh.cells()[celli], i){
             const label& facei = mesh.cells()[celli][i];
             if (mesh.isInternalFace(facei)) //Damit keine Werte auf den Rändern berücksichtigt werden.
@@ -545,8 +737,17 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
             }
         }
     }
-    fvm.diag() += volCentreCorrection.primitiveField()*vofField_.primitiveField();
-    fvm.diag() += (1-vofField_.primitiveField())*1e24;  // Geschwindigkeit wird im Solid zu 0 gesetzt
+
+    if(mesh.time().outputTime())
+    {
+        vofField_.write();
+        interfaceDistanceX_.write();
+        interfaceDistanceY_.write(); 
+        volCentreCorrection.write();
+    }
+
+    fvm.diag() += volCentreCorrection.primitiveField() + (1-vofField_.primitiveField())*1e24;
+    // Geschwindigkeit wird im Solid zu 0 gesetzt (benötigt binäres Feld)
     
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -1,6 +1,7 @@
 EXE_INC = \
 	-I. \
 	-I../multiMultiFoam/src/foamTools/lnInclude \
+	-I../twoPhaseFlow/code/ThirdParty/src/VoF/lnInclude \
 	-I$(LIB_SRC)/triSurface/lnInclude \
 	-I$(LIB_SRC)/surfMesh/lnInclude \
 	-I$(LIB_SRC)/finiteVolume/lnInclude \
@@ -34,4 +35,5 @@ LIB_LIBS = \
 	-limmiscibleIncompressibleTwoPhaseMixture \
    -lturbulenceModels \
 	-L$(FOAM_USER_LIBBIN) \
-	-lfoamTools
+	-lfoamTools \
+	-lVoF
