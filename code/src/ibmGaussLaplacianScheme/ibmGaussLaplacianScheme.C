@@ -31,6 +31,10 @@ License
 #include "fvcGrad.H"
 #include "fvMatrices.H"
 #include "unitConversion.H"
+#include "cutCellIso.H"
+#include "cutFaceIso.H"
+#include "searchableSurfaces.H"
+#include "foamTool.H"
  
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
  
@@ -93,6 +97,54 @@ scalar ibmGaussLaplacianScheme<Type, GType>::intersection
     const scalar& divisor = normal & (c_2 - c_1);
     
     return dividend/(divisor + SMALL);
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+    // Funktion aus setAlphaField:
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+template<class Type, class GType>
+void ibmGaussLaplacianScheme<Type, GType>::setAlpha
+(
+    volScalarField& alpha1,
+    DynamicList<List<point>>& facePts,
+    scalarField& f,
+    const bool writeOBJ // immer false
+)
+{
+    const fvMesh& mesh = alpha1.mesh();
+    cutCellIso cutCell(mesh, f);
+    cutFaceIso cutFace(mesh, f);
+
+    forAll(alpha1, cellI)
+    {
+        cutCell.calcSubCell(cellI, 0.0);
+
+        alpha1[cellI] = max(min(cutCell.VolumeOfFluid(), 1), 0); // hier könnte problem liegen
+
+        if (writeOBJ && (mag(cutCell.faceArea()) >= 1e-14))
+        {
+            facePts.append(cutCell.facePoints());
+        }
+    }
+
+    // Setting boundary alpha1 values
+    forAll(mesh.boundary(), patchi)
+    {
+        if (mesh.boundary()[patchi].size() > 0)
+        {
+            const label start = mesh.boundary()[patchi].patch().start();
+            scalarField& alphap = alpha1.boundaryFieldRef()[patchi];
+            const scalarField& magSfp = mesh.magSf().boundaryField()[patchi];
+
+            forAll(alphap, patchFacei)
+            {
+                const label facei = patchFacei + start;
+                cutFace.calcSubFace(facei, 0.0);
+                alphap[patchFacei] =
+                    mag(cutFace.subFaceArea())/magSfp[patchFacei];
+            }
+        }
+    }
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -186,17 +238,152 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 
+// Erweiterung auf stl-Datei als input:
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+    
+    const dynamicFvMesh& dynMesh = static_cast<const dynamicFvMesh&>(mesh);
+    dictionary dict = foamTools::readDict
+    (
+        dynMesh,
+        foamTools::dictFile(dynMesh, "distances/stlDict")
+    );
+    autoPtr<searchableSurfaces> geomPtr_;
+    geomPtr_.reset(nullptr);
+    geomPtr_.reset
+    (
+        new searchableSurfaces
+        (
+            IOobject
+            (
+                "abc",                             // dummy name
+                mesh.time().constant(),           // directory
+                "triSurface",                      // instance
+                mesh.time(),                      // registry
+                IOobject::MUST_READ,
+                IOobject::NO_WRITE
+            ),
+            dict.subDict("geometry"),
+            true                // allow single-region shortcut
+        )
+    );
+
+    const pointField& pc = mesh.points();
+    scalarField distance(mesh.nPoints(), Zero);    // distance ist f Field
+
+    labelList surfaces;
+    List<pointIndexHit> nearestInfo;
+    geomPtr_().findNearest
+    (
+        pc,
+        scalarField(pc.size(), GREAT),
+        surfaces,
+        nearestInfo
+    );
+
+    forAll(nearestInfo, i)
+    {
+        distance[i] = mag(nearestInfo[i].hitPoint()-pc[i]);
+    }
+
+    /*volScalarField distanceCell
+    (
+        IOobject
+        (
+            "distanceCell",
+            vf.instance(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar("distanceCell", dimLength, 0)
+    );
+    
+    scalar n;
+    forAll(mesh.C(), celli){
+        n = 0;
+        forAll(mesh.cellPoints()[celli], i){
+            n += 1;
+            const label& pointi = mesh.cellPoints()[celli][i];
+            distanceCell[celli] += distance[pointi];
+        }
+        distanceCell[celli] = distanceCell[celli]/n;
+    }
+    distanceCell.write();*/
+
+        // Hierdurch wird Fehler verursacht:
+    List<volumeType> volType;
+    forAll(geomPtr_(), sID)
+    {
+        geomPtr_()[sID].getVolumeType
+        (
+            pc,
+            volType
+        );
+        forAll(volType, pointi)
+        {
+            if(volType[pointi] == volumeType::INSIDE)
+            {
+                distance[pointi] = -1*distance[pointi];
+            }
+        }
+    }
+
+    /*volScalarField distanceCell
+    (
+        IOobject
+        (
+            "distanceCell",
+            vf.instance(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar("distanceCell", dimLength, 0)
+    );
+    
+    scalar n;
+    forAll(mesh.C(), celli){
+        n = 0;
+        forAll(mesh.cellPoints()[celli], i){
+            n += 1;
+            const label& pointi = mesh.cellPoints()[celli][i];
+            distanceCell[celli] += distance[pointi];
+        }
+        distanceCell[celli] = distanceCell[celli]/n;
+    }
+    distanceCell.write();*/
+
+
     // Dinge die in Constructor verschoben wurden:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-    /*autoPtr<advectionSchemes> advector_;
-    volScalarField& alpha1 = mesh.lookupObjectRef<volScalarField>("alpha.water");
+
+    autoPtr<advectionSchemes> advector_;
+    //volScalarField& alpha1 = mesh.lookupObjectRef<volScalarField>("alpha.water"); // Zeile, wenn alpha.water verwendet wird
+    volScalarField alpha1     // Zeile, wenn geomPtr verwendet wird
+    (
+        IOobject
+        (
+            "alpha.water",
+            vf.instance(),
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar("alpha.water", dimless, 0)
+    );
     volVectorField& U = mesh.lookupObjectRef<volVectorField>("U");
     surfaceScalarField& phi = mesh.lookupObjectRef<surfaceScalarField>("phi");
+    
+    DynamicList<List<point>> facePts;
+    setAlpha(alpha1, facePts, distance, false);
 
     advector_.reset(advectionSchemes::New(alpha1,phi,U));
     advector_->surf().reconstruct();
 
-    volScalarField& vofField_ = alpha1;
+    //volScalarField& vofField_ = alpha1;
 
     volScalarField vofField_    // Später mit Indicator definieren
     (
@@ -211,7 +398,7 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
         mesh,
         dimensionedScalar("vof", dimless, -1.0)
     );
-
+    
     forAll(mesh.C(), celli){
         if(alpha1[celli] < 0.5){
             vofField_[celli] = 0;
@@ -219,7 +406,7 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
             vofField_[celli] = 1;
         }
     }
-
+    
     //const scalar& delta_quotient_ = 2; // Werte zwischen 1 und unendlich
     surfaceScalarField delta_quotient_    // in Constructor verlegt
     (
@@ -239,7 +426,7 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
     const volVectorField& interfaceCentre_ = advector_->surf().centre();
     const boolList& isInterfaceCell_ = advector_->surf().interfaceCell();
     
-    surfaceScalarField vofGrad_ = fvc::snGrad(vofField_);*/
+    surfaceScalarField vofGrad_ = fvc::snGrad(vofField_);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -279,13 +466,12 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
     scalar dist_neighbourInterface;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
+    
     forAll(delta_quotient_, i){
 
         if(
             vofGrad_[i] != 0
         ){
-            
             const label& owneri = mesh.faceOwner()[i];
             const vector& cOwneri = mesh.C()[owneri];
             const vector& interfaceNormalOwner = interfaceNormal_[owneri];
@@ -741,6 +927,7 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
     if(mesh.time().outputTime())
     {
         vofField_.write();
+        alpha1.write();
         interfaceDistanceX_.write();
         interfaceDistanceY_.write(); 
         volCentreCorrection.write();

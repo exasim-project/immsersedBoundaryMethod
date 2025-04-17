@@ -68,7 +68,7 @@ class ibmGaussLaplacianScheme
 private:
 
     //-
-        volScalarField& alpha1_;
+     /*   volScalarField& alpha1_;
 
         volVectorField& U_;
 
@@ -86,7 +86,7 @@ private:
 
         surfaceScalarField vofGrad_;
 
-        surfaceScalarField delta_quotient_;
+        surfaceScalarField delta_quotient_;*/
 
 protected:
 
@@ -117,54 +117,9 @@ public:
         //ibmGaussLaplacianScheme(const fvMesh& mesh);
         ibmGaussLaplacianScheme(const fvMesh& mesh)
         :
-            laplacianScheme<Type, GType>(mesh),
-            alpha1_(mesh.lookupObjectRef<volScalarField>("alpha.water")),
-            U_(mesh.lookupObjectRef<volVectorField>("U")),
-            phi_(mesh.lookupObjectRef<surfaceScalarField>("phi")),
-            advector_(advectionSchemes::New(alpha1_,phi_,U_)),
-            interfaceNormal_(advector_->surf().normal()),
-            interfaceCentre_(advector_->surf().centre()),
-            isInterfaceCell_(advector_->surf().interfaceCell()),
-            vofField_
-            (
-                IOobject
-                (
-                    "vof",
-                    alpha1_.instance(),
-                    mesh,
-                    IOobject::NO_READ,
-                    IOobject::AUTO_WRITE
-                ),
-                mesh,
-                dimensionedScalar("vof", dimless, -1.0)
-            ),
-            vofGrad_(fvc::snGrad(vofField_)),
-            delta_quotient_
-            (
-                IOobject
-                (
-                    "delta_quotient",
-                    phi_.instance(),
-                    mesh,
-                    IOobject::NO_READ,
-                    IOobject::AUTO_WRITE
-                ),
-                mesh,
-                dimensionedScalar("delta_quotient", dimless, 1)
-            )
+            laplacianScheme<Type, GType>(mesh)
         {
-            //advector_.reset(advectionSchemes::New(alpha1_,phi_,U_));
-            advector_->surf().reconstruct();
-
-            forAll(mesh.C(), celli){        // binäres Feld
-                if(alpha1_[celli] < 0.5){
-                    vofField_[celli] = 0;
-                }else{
-                    vofField_[celli] = 1;
-                }
-            }
             
-            vofGrad_ = fvc::snGrad(vofField_);
         }
  
         
@@ -172,54 +127,9 @@ public:
         //ibmGaussLaplacianScheme(const fvMesh& mesh, Istream& is);
         ibmGaussLaplacianScheme(const fvMesh& mesh, Istream& is)
         :
-            laplacianScheme<Type, GType>(mesh, is),
-            alpha1_(mesh.lookupObjectRef<volScalarField>("alpha.water")),
-            U_(mesh.lookupObjectRef<volVectorField>("U")),
-            phi_(mesh.lookupObjectRef<surfaceScalarField>("phi")),
-            advector_(advectionSchemes::New(alpha1_,phi_,U_)),
-            interfaceNormal_(advector_->surf().normal()),
-            interfaceCentre_(advector_->surf().centre()),
-            isInterfaceCell_(advector_->surf().interfaceCell()),
-            vofField_
-            (
-                IOobject
-                (
-                    "vof",
-                    alpha1_.instance(),
-                    mesh,
-                    IOobject::NO_READ,
-                    IOobject::AUTO_WRITE
-                ),
-                mesh,
-                dimensionedScalar("vof", dimless, -1.0)
-            ),
-            vofGrad_(fvc::snGrad(vofField_)),
-            delta_quotient_
-            (
-                IOobject
-                (
-                    "delta_quotient",
-                    phi_.instance(),
-                    mesh,
-                    IOobject::NO_READ,
-                    IOobject::AUTO_WRITE
-                ),
-                mesh,
-                dimensionedScalar("delta_quotient", dimless, 1)
-            )
+            laplacianScheme<Type, GType>(mesh, is)
         {
-            //advector_.reset(advectionSchemes::New(alpha1_,phi_,U_));
-            advector_->surf().reconstruct();
-
-            forAll(mesh.C(), celli){        // binäres Feld
-                if(alpha1_[celli] < 0.5){
-                    vofField_[celli] = 0;
-                }else{
-                    vofField_[celli] = 1;
-                }
-            }
-
-            vofGrad_ = fvc::snGrad(vofField_);
+            
         }
  
         //- Construct from mesh, interpolation and snGradScheme schemes
@@ -230,54 +140,9 @@ public:
             const tmp<snGradScheme<Type>>& sngs
         )
         :
-            laplacianScheme<Type, GType>(mesh, igs, sngs),
-            alpha1_(mesh.lookupObjectRef<volScalarField>("alpha.water")),
-            U_(mesh.lookupObjectRef<volVectorField>("U")),
-            phi_(mesh.lookupObjectRef<surfaceScalarField>("phi")),
-            advector_(advectionSchemes::New(alpha1_,phi_,U_)),
-            interfaceNormal_(advector_->surf().normal()),
-            interfaceCentre_(advector_->surf().centre()),
-            isInterfaceCell_(advector_->surf().interfaceCell()),
-            vofField_
-            (
-                IOobject
-                (
-                    "vof",
-                    alpha1_.instance(),
-                    mesh,
-                    IOobject::NO_READ,
-                    IOobject::AUTO_WRITE
-                ),
-                mesh,
-                dimensionedScalar("vof", dimless, -1.0)
-            ),
-            vofGrad_(fvc::snGrad(vofField_)),
-            delta_quotient_
-            (
-                IOobject
-                (
-                    "delta_quotient",
-                    phi_.instance(),
-                    mesh,
-                    IOobject::NO_READ,
-                    IOobject::AUTO_WRITE
-                ),
-                mesh,
-                dimensionedScalar("delta_quotient", dimless, 1)
-            )
+            laplacianScheme<Type, GType>(mesh, igs, sngs)
         {
-            //advector_.reset(advectionSchemes::New(alpha1_,phi_,U_));
-            advector_->surf().reconstruct();
-
-            forAll(mesh.C(), celli){        // binäres Feld
-                if(alpha1_[celli] < 0.5){
-                    vofField_[celli] = 0;
-                }else{
-                    vofField_[celli] = 1;
-                }
-            }
-
-            vofGrad_ = fvc::snGrad(vofField_);
+            
         }
  
  
@@ -302,6 +167,14 @@ public:
             const vector& c_2, 
             const vector& c_E, 
             const vector& normal
+        );
+
+        void setAlpha
+        (
+            volScalarField& alpha1,
+            DynamicList<List<point>>& facePts,
+            scalarField& f,
+            const bool writeOBJ     // immer false
         );
 
         tmp<fvMatrix<Type>> fvmLaplacianUncorrected
