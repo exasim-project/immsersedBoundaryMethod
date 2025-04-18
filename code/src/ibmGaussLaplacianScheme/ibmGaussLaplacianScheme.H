@@ -44,6 +44,8 @@ SourceFiles
 #include "laplacianScheme.H"
 #include "indicator.H"
 #include "advectionSchemes.H"
+
+#include "ibmGeometryData.H"
  
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
  
@@ -67,27 +69,6 @@ class ibmGaussLaplacianScheme
 
 private:
 
-    //-
-     /*   volScalarField& alpha1_;
-
-        volVectorField& U_;
-
-        surfaceScalarField& phi_;
-
-        autoPtr<advectionSchemes> advector_;
-
-        const volVectorField& interfaceNormal_;
-
-        const volVectorField& interfaceCentre_;
-
-        const boolList& isInterfaceCell_;
-
-        volScalarField vofField_;
-
-        surfaceScalarField vofGrad_;
-
-        surfaceScalarField delta_quotient_;*/
-
 protected:
 
     // Private Member Functions
@@ -103,6 +84,14 @@ protected:
  
         //- No copy assignment
         void operator=(const ibmGaussLaplacianScheme&) = delete;
+
+        word name_;
+
+        static HashTable<ibmGeometryData> geoData_;
+
+        void createGeoData(const fvMesh& mesh);
+
+        ibmGeometryData& geoData();
  
  
 public:
@@ -119,7 +108,7 @@ public:
         :
             laplacianScheme<Type, GType>(mesh)
         {
-            
+            createGeoData(mesh);
         }
  
         
@@ -129,7 +118,7 @@ public:
         :
             laplacianScheme<Type, GType>(mesh, is)
         {
-            
+            createGeoData(mesh);
         }
  
         //- Construct from mesh, interpolation and snGradScheme schemes
@@ -142,7 +131,7 @@ public:
         :
             laplacianScheme<Type, GType>(mesh, igs, sngs)
         {
-            
+            createGeoData(mesh);
         }
  
  
@@ -151,32 +140,6 @@ public:
  
  
     // Member Functions
-        
-        vector bisektion
-        (
-            const vector a,
-            const vector b,
-            const int max_iter,
-            const vector centre,
-            const scalar radius
-        );
-
-        scalar intersection
-        (
-            const vector& c_1, 
-            const vector& c_2, 
-            const vector& c_E, 
-            const vector& normal
-        );
-
-        void setAlpha
-        (
-            volScalarField& alpha1,
-            DynamicList<List<point>>& facePts,
-            scalarField& f,
-            const bool writeOBJ     // immer false
-        );
-
         tmp<fvMatrix<Type>> fvmLaplacianUncorrected
         (
             const surfaceScalarField& gammaMagSf,
