@@ -10,3 +10,7 @@
 	path = code/mmf_scripts
 	url = git@gitlab.kit.edu:kit/istm/research/multiMultiFoam_extend/scripts.git
 	branch = main
+[submodule "code/multiDimAMR"]
+	path = code/multiDimAMR
+	url = git@gitlab.kit.edu:kit/istm/research/multiMultiFoam_thirdParty/multiDimAMR.git
+	branch = v2106
