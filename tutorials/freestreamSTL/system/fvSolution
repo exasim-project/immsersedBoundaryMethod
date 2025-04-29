@@ -16,11 +16,21 @@ FoamFile
 
 solvers
 {
+    alpha.ibm
+    {
+        nAlphaCorr      1;
+        nAlphaSubCycles 1;
+        cAlpha          2; //compression coefficient
+
+        advectionScheme isoAdvection;
+        reconstructionScheme plicRDF;
+    }
+
     p
     {
         solver          GAMG;
-        tolerance       1e-06;
-        relTol          0.1;
+        tolerance       1e-08;
+        relTol          0.01;
         smoother        GaussSeidel;
     }
 
@@ -28,7 +38,7 @@ solvers
     {
         $p;
         smoother        DICGaussSeidel;
-        tolerance       1e-06;
+        tolerance       1e-08;
         relTol          0;
     }
 
@@ -36,7 +46,7 @@ solvers
     {
         solver          PCG;
         preconditioner  DIC;
-        tolerance       1e-10;
+        tolerance       1e-12;
         relTol          0;
     }
 
@@ -81,6 +91,9 @@ PIMPLE
 {
     nCorrectors     2;
     nNonOrthogonalCorrectors 0;
+
+    //pRefPoint               (-9 0 0);
+    //pRefValue               0;
 }
 
 

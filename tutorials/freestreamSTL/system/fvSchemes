@@ -37,9 +37,10 @@ divSchemes
 laplacianSchemes
 {
     default                                             Gauss linear corrected;
+
     //laplacian(rAUf,p)                                   Gauss linear corrected;
     //laplacian(rAUf,pcorr)                               Gauss linear corrected;
-    laplacian(diffusionDiffusivity,U)                   IBMGauss linear orthogonal; //IBM
+    laplacian(IBM,U)                                    IBMGauss linear orthogonal; //IBM
     //laplacian(hydrogenDiffusionDiffusivity,hydrogen)    Gauss linear corrected;
 }
 
@@ -50,7 +51,7 @@ interpolationSchemes
 
 snGradSchemes
 {
-    default         orthogonal;
+    default         corrected;
 }
 
 

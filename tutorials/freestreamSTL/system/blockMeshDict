@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2306                                 |
+|  \\    /   O peration     | Version:  v2106                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -13,141 +13,29 @@ FoamFile
     object      blockMeshDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+#include "../parameter"
 
-scale 1;
+L_z_neg                 #eval "-$L_z";
 
-x_min          -100.0;
-x_max          200.0;
-y_min          -100.0;
-y_max          100.0;
-z_min          -1.0;
-z_max          1.0;
+n_x                     #eval "ceil(($L_x_max - $L_x_min)/$delta_x)";
+n_y                     #eval "ceil(($L_y_max - $L_y_min)/$delta_x)";
+n_z                     1;
 
-del_preBlock        90;
-del_cylinderBlock   20;
-
-x_maxPre    #eval "$x_min + $del_preBlock";
-x_minPost   #eval "$x_min + $del_preBlock + $del_cylinderBlock";
-y_minCyl    -10;
-y_maxCyl    10;
-
-vertices        
+vertices
 (
-    // pre-block
-    ($x_min         $y_minCyl   $z_min)   //0
-    ($x_maxPre      $y_minCyl   $z_min)   //1
-    ($x_maxPre      $y_maxCyl   $z_min)   //2
-    ($x_min         $y_maxCyl   $z_min)   //3
-    ($x_min         $y_minCyl   $z_max)   //4
-    ($x_maxPre      $y_minCyl   $z_max)   //5 
-    ($x_maxPre      $y_maxCyl   $z_max)   //6
-    ($x_min         $y_maxCyl   $z_max)   //7
-
-    // cylinder-block
-    ($x_maxPre      $y_minCyl   $z_min)   //8
-    ($x_minPost     $y_minCyl   $z_min)   //9
-    ($x_minPost     $y_maxCyl   $z_min)   //10
-    ($x_maxPre      $y_maxCyl   $z_min)   //11
-    ($x_maxPre      $y_minCyl   $z_max)   //12
-    ($x_minPost     $y_minCyl   $z_max)   //13 
-    ($x_minPost     $y_maxCyl   $z_max)   //14
-    ($x_maxPre      $y_maxCyl   $z_max)   //15
-
-    // post-block
-    ($x_minPost     $y_minCyl   $z_min)   //16
-    ($x_max         $y_minCyl   $z_min)   //17
-    ($x_max         $y_maxCyl   $z_min)   //18
-    ($x_minPost     $y_maxCyl   $z_min)   //19
-    ($x_minPost     $y_minCyl   $z_max)   //20
-    ($x_max         $y_minCyl   $z_max)   //21 
-    ($x_max         $y_maxCyl   $z_max)   //22
-    ($x_minPost     $y_maxCyl   $z_max)   //23
-
-    // Down-pre
-    ($x_min         $y_min      $z_min)   //24
-    ($x_maxPre      $y_min      $z_min)   //25
-    ($x_maxPre      $y_minCyl   $z_min)   //26
-    ($x_min         $y_minCyl   $z_min)   //27
-    ($x_min         $y_min      $z_max)   //28
-    ($x_maxPre      $y_min      $z_max)   //29
-    ($x_maxPre      $y_minCyl   $z_max)   //30
-    ($x_min         $y_minCyl   $z_max)   //31
-
-    // Down-cyl
-    ($x_maxPre      $y_min      $z_min)   //32
-    ($x_minPost     $y_min      $z_min)   //33
-    ($x_minPost     $y_minCyl   $z_min)   //34
-    ($x_maxPre      $y_minCyl   $z_min)   //35
-    ($x_maxPre      $y_min      $z_max)   //36
-    ($x_minPost     $y_min      $z_max)   //37 
-    ($x_minPost     $y_minCyl   $z_max)   //38
-    ($x_maxPre      $y_minCyl   $z_max)   //39
-
-    // Down-post
-    ($x_minPost     $y_min      $z_min)   //40
-    ($x_max         $y_min      $z_min)   //41
-    ($x_max         $y_minCyl   $z_min)   //42
-    ($x_minPost     $y_minCyl   $z_min)   //43
-    ($x_minPost     $y_min      $z_max)   //44
-    ($x_max         $y_min      $z_max)   //45
-    ($x_max         $y_minCyl   $z_max)   //46
-    ($x_minPost     $y_minCyl   $z_max)   //47
-
-    // Up-pre
-    ($x_min         $y_maxCyl   $z_min)   //48
-    ($x_maxPre      $y_maxCyl   $z_min)   //49
-    ($x_maxPre      $y_max      $z_min)   //50
-    ($x_min         $y_max      $z_min)   //51
-    ($x_min         $y_maxCyl   $z_max)   //52
-    ($x_maxPre      $y_maxCyl   $z_max)   //53 
-    ($x_maxPre      $y_max      $z_max)   //54
-    ($x_min         $y_max      $z_max)   //55
-
-    // Up-cyl
-    ($x_maxPre      $y_maxCyl   $z_min)   //56
-    ($x_minPost     $y_maxCyl   $z_min)   //57
-    ($x_minPost     $y_max      $z_min)   //58
-    ($x_maxPre      $y_max      $z_min)   //59
-    ($x_maxPre      $y_maxCyl   $z_max)   //60
-    ($x_minPost     $y_maxCyl   $z_max)   //61 
-    ($x_minPost     $y_max      $z_max)   //62
-    ($x_maxPre      $y_max      $z_max)   //63
-
-    // Up-post
-    ($x_minPost     $y_maxCyl   $z_min)   //64
-    ($x_max         $y_maxCyl   $z_min)   //65
-    ($x_max         $y_max      $z_min)   //66
-    ($x_minPost     $y_max      $z_min)   //67
-    ($x_minPost     $y_maxCyl   $z_max)   //68
-    ($x_max         $y_maxCyl   $z_max)   //69 
-    ($x_max         $y_max      $z_max)   //70
-    ($x_minPost     $y_max      $z_max)   //71
-
+    ( $L_x_min     $L_y_min   $L_z_neg)
+    ( $L_x_max     $L_y_min   $L_z_neg)
+    ( $L_x_max     $L_y_max   $L_z_neg)
+    ( $L_x_min     $L_y_max   $L_z_neg)
+    ( $L_x_min     $L_y_min   $L_z)
+    ( $L_x_max     $L_y_min   $L_z)
+    ( $L_x_max     $L_y_max   $L_z)
+    ( $L_x_min     $L_y_max   $L_z)
 );
 
-blocks          
+blocks
 (
-    // pre-block
-    hex (0 1 2 3 4 5 6 7) (45 10 1) simpleGrading (1 1 1)
-    // cylinder-block
-    hex (8 9 10 11 12 13 14 15) (400 400 1) simpleGrading (1 1 1)
-    // post-block
-    hex (16 17 18 19 20 21 22 23) (1900 200 1) simpleGrading (1 1 1)
-
-    // down-pre-block
-    hex (24 25 26 27 28 29 30 31) (45 45 1) simpleGrading (1 1 1)
-    // up-pre-block
-    hex (48 49 50 51 52 53 54 55) (45 45 1) simpleGrading (1 1 1)
-
-    // up-cyl-block
-    hex (56 57 58 59 60 61 62 63) (10 45 1) simpleGrading (1 1 1)
-    // down-cyl-block
-    hex (32 33 34 35 36 37 38 39) (10 45 1) simpleGrading (1 1 1)
-
-    // up-post-block
-    hex (64 65 66 67 68 69 70 71) (95 45 1) simpleGrading (1 1 1)
-    // down-post-block
-    hex (40 41 42 43 44 45 46 47) (95 45 1) simpleGrading (1 1 1)
+    hex (0 1 2 3 4 5 6 7) ($n_x $n_y $n_z) simpleGrading (1 1 1) 
 );
 
 edges
@@ -156,14 +44,22 @@ edges
 
 boundary
 (
-    inlet
+    top
     {
-        type patch;
+        type cyclic;
+        neighbourPatch bottom;
         faces
         (
-            (0 4 7 3)
-            (24 28 31 27)
-            (48 52 55 51)
+            (3 7 6 2)
+        );
+    }
+    bottom
+    {
+        type cyclic;
+        neighbourPatch top;
+        faces
+        (
+            (1 5 4 0)
         );
     }
     outlet
@@ -171,63 +67,15 @@ boundary
         type patch;
         faces
         (
-            (17 18 22 21)
-            (41 42 46 45)
-            (65 66 70 69)
+            (2 6 5 1)
         );
     }
-    upperPre
+    inlet
     {
-        type cyclic;
-        neighbourPatch  lowerPre;
+        type patch;
         faces
         (
-            (51 55 54 50)
-        );
-    }
-    lowerPre
-    {
-        type cyclic;
-        neighbourPatch  upperPre;
-        faces
-        (
-            (24 28 29 25)
-        );
-    }
-    upperCyl
-    {
-        type cyclic;
-        neighbourPatch  lowerCyl;
-        faces
-        (
-            (59 63 62 58)
-        );
-    }
-    lowerCyl
-    {
-        type cyclic;
-        neighbourPatch  upperCyl;
-        faces
-        (
-            (32 36 37 33)
-        );
-    }
-    upperPost
-    {
-        type cyclic;
-        neighbourPatch  lowerPost;
-        faces
-        (
-            (67 71 70 66)
-        );
-    }
-    lowerPost
-    {
-        type cyclic;
-        neighbourPatch  upperPost;
-        faces
-        (
-            (40 44 45 41)
+            (0 4 7 3)
         );
     }
     frontAndBack
@@ -236,234 +84,14 @@ boundary
         faces
         (
             (0 3 2 1)
-            (8 11 10 9)
-            (16 19 18 17)
-            (24 27 26 25)
-            (32 35 34 33)
-            (40 43 42 41)
-            (48 51 50 49)
-            (56 59 58 57)
-            (64 67 66 65)
-            (4 7 6 5)
-            (12 15 14 13)
-            (20 23 22 21)
-            (28 31 30 29)
-            (36 39 38 37)
-            (44 47 46 45)
-            (52 55 54 53)
-            (60 63 62 61)
-            (68 71 70 69)
-        );
-    }
+            (4 5 6 7)
 
-    x_PreD
-    {
-        type patch;
-        faces
-        (
-            (1 2 6 5)
-        );
-    }
-    x_PreU
-    {
-        type patch;
-        faces
-        (
-            (8 11 15 12)
-        );
-    }
-    x_PostD
-    {
-        type patch;
-        faces
-        (
-            (9 10 14 13)
-        );
-    }
-    x_PostU
-    {
-        type patch;
-        faces
-        (
-            (16 19 23 20)
-        );
-    }
-    x_PreDD
-    {
-        type patch;
-        faces
-        (
-            (25 26 30 29)
-        );
-    }
-    x_PreUD
-    {
-        type patch;
-        faces
-        (
-            (32 35 39 36)
-        );
-    }
-    x_PostDD
-    {
-        type patch;
-        faces
-        (
-            (33 34 38 37)
-        );
-    }
-    x_PostUD
-    {
-        type patch;
-        faces
-        (
-            (40 43 47 44)
-        );
-    }
-    x_PreDU
-    {
-        type patch;
-        faces
-        (
-            (49 50 54 53)
-        );
-    }
-    x_PreUU
-    {
-        type patch;
-        faces
-        (
-            (56 59 63 60)
-        );
-    }
-    x_PostDU
-    {
-        type patch;
-        faces
-        (
-            (57 58 62 61)
-        );
-    }
-    x_PostUU
-    {
-        type patch;
-        faces
-        (
-            (64 67 71 68)
-        );
-    }
-    y_PreDD
-    {
-        type patch;
-        faces
-        (
-            (27 31 30 26)
-        );
-    }
-    y_PreDU
-    {
-        type patch;
-        faces
-        (
-            (0 4 5 1)
-        );
-    }
-    y_PreUD
-    {
-        type patch;
-        faces
-        (
-            (3 7 6 2)
-        );
-    }
-    y_PreUU
-    {
-        type patch;
-        faces
-        (
-            (48 52 53 49)
-        );
-    }
-    y_CylDD
-    {
-        type patch;
-        faces
-        (
-            (35 39 38 34)
-        );
-    }
-    y_CylDU
-    {
-        type patch;
-        faces
-        (
-            (8 12 13 9)
-        );
-    }
-    y_CylUD
-    {
-        type patch;
-        faces
-        (
-            (11 15 14 10)
-        );
-    }
-    y_CylUU
-    {
-        type patch;
-        faces
-        (
-            (56 60 61 57)
-        );
-    }
-    y_PostDD
-    {
-        type patch;
-        faces
-        (
-            (43 47 46 42)
-        );
-    }
-    y_PostDU
-    {
-        type patch;
-        faces
-        (
-            (16 20 21 17)
-        );
-    }
-    y_PostUD
-    {
-        type patch;
-        faces
-        (
-            (19 23 22 18)
-        );
-    }
-    y_PostUU
-    {
-        type patch;
-        faces
-        (
-            (64 68 69 65)
         );
     }
 );
 
 mergePatchPairs
 (
-    (x_PreD x_PreU)
-    (x_PostD x_PostU)
-    (x_PreDD x_PreUD)
-    (x_PostDD x_PostUD)
-    (x_PreDU x_PreUU)
-    (x_PostDU x_PostUU)
-    (y_PreDD y_PreDU)
-    (y_PreUD y_PreUU)
-    (y_CylDD y_CylDU)
-    (y_CylUU y_CylUD)
-    (y_PostDD y_PostDU)
-    (y_PostUD y_PostUU)
 );
 
 // ************************************************************************* //
