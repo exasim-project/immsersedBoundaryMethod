@@ -34,7 +34,6 @@ License
 #include "cutCellIso.H"
 #include "cutFaceIso.H"
 #include "searchableSurfaces.H"
-#include "foamTool.H"
  
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
  
@@ -52,16 +51,11 @@ void ibmGaussLaplacianScheme<Type, GType>::createGeoData(const fvMesh& mesh)
 {
     const dynamicFvMesh& dynMesh = static_cast<const dynamicFvMesh&>(mesh);
 
-    dictionary dict = foamTools::readDict
-    (
-        dynMesh,
-        foamTools::dictFile(dynMesh, "distances/stlDict")
-    );
-    name_ = dict.get<word>("name");
+    name_ = mesh.time().controlDict().get<word>("geometry");
 
-    if(!geoData_.found(name_))
+    if(!ibmGeometryData::geoDataTable().found(name_))
     {
-        geoData_.insert(name_, ibmGeometryData(dynMesh));
+        ibmGeometryData::geoDataTable().insert(name_, ibmGeometryData(dynMesh));
     }
 }
 
@@ -69,7 +63,7 @@ void ibmGaussLaplacianScheme<Type, GType>::createGeoData(const fvMesh& mesh)
 template<class Type, class GType>
 ibmGeometryData& ibmGaussLaplacianScheme<Type, GType>::geoData()
 {
-    return geoData_[name_];
+    return ibmGeometryData::geoDataTable()[name_];
 }
 
 

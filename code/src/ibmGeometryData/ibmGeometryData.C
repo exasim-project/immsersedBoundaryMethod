@@ -32,6 +32,8 @@ License
 #include "foamTool.H"
  
 
+HashTable<ibmGeometryData> Foam::ibmGeometryData::geoData_;
+
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 bool Foam::ibmGeometryData::updated()
 {

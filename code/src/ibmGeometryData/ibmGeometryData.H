@@ -61,6 +61,8 @@ protected:
     const dynamicFvMesh& mesh_;
     label timeIndex_;
 
+    static HashTable<ibmGeometryData> geoData_;
+
     bool updated();
     void update();
     void correct();
@@ -99,6 +101,8 @@ public:
     surfaceScalarField& deltaQuotient() { update(); return deltaQuotientPtr_(); }
     volScalarField& vofField()          { update(); return vofFieldPtr_(); }
     surfaceScalarField& vofGrad()       { update(); return vofGradPtr_(); }
+    
+    static HashTable<ibmGeometryData>& geoDataTable(){ return geoData_; }
 };
  
 } // End namespace Foam
