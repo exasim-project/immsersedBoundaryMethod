@@ -2,4 +2,6 @@ foamTools/ofTerms/soIBM/soIBMRunTime.C
 ibmGaussLaplacianScheme/ibmGaussLaplacianSchemeRunTime.C
 ibmGeometryData/ibmGeometryData.C
 
+secondOrderIBM/secondOrderIBM.C
+
 LIB = $(FOAM_USER_LIBBIN)/libsoIBM

@@ -90,9 +90,6 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
     );
     fvMatrix<Type>& fvm = tfvm.ref();
 
-    fvm.upper() = deltaCoeffs.primitiveField()*gammaMagSf.primitiveField();
-    fvm.negSumDiag();
-
     surfaceScalarField surfCentreCorrection(gammaMagSf*(1.0-geoData().deltaQuotient())*mag(geoData().vofGrad())); 
     surfaceScalarField faceCorrection(gammaMagSf*mag(geoData().vofGrad()));
 
@@ -120,12 +117,8 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
         }
     }
 
-    fvm.diag() += volCentreCorrection.primitiveField() + (1-geoData().vofField().primitiveField())*1e24;
-    // Geschwindigkeit wird im Solid zu 0 gesetzt (benötigt binäres Feld)
-    
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-    fvm.upper() -= faceCorrection.primitiveField();
+    fvm.diag() = volCentreCorrection.primitiveField();
+    fvm.upper() = -faceCorrection.primitiveField();
 
 
     forAll(vf.boundaryField(), patchi)  // Wenn auskommentiert: RB werden am Gitterrand nicht mehr angewendet
