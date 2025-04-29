@@ -28,7 +28,6 @@ fi
 if [ -z "$LOCAL_SCRIPT_PATH" ]; then 
     if [ ! -e "$SOURCE_DIR/code/mmf_scripts/README.md" ]; then 
         git submodule update --init code/mmf_scripts
-        return;
     fi
     export LOCAL_SCRIPT_PATH=$SOURCE_DIR/code/mmf_scripts
 else
