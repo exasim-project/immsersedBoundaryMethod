@@ -52,7 +52,7 @@ adaptCriteria
         {
             type                fieldBounds;
             fieldName           gradU;
-            lowerBound          1e-02;
+            lowerBound          4e-03;
             upperBound          1e05;
             maxCellLevel        2;
             nLayer              6;              
