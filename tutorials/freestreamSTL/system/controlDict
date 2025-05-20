@@ -19,7 +19,7 @@ cfdFunctions    (flow);
 
 libs
 (
-    "dynamicLoadBalanceFvMesh"
+    // "dynamicLoadBalanceFvMesh"
     "soIBM"
     "libVoF"
 );

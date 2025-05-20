@@ -1,7 +1,6 @@
 EXE_INC = \
 	-I. \
-	-I../multiMultiFoam/src/foamTools/lnInclude \
-	-I../twoPhaseFlow/code/ThirdParty/src/VoF/lnInclude \
+	-I../TwoPhaseFlow/src/VoF/lnInclude \
 	-I$(LIB_SRC)/triSurface/lnInclude \
 	-I$(LIB_SRC)/surfMesh/lnInclude \
 	-I$(LIB_SRC)/finiteVolume/lnInclude \
@@ -26,15 +25,14 @@ LIB_LIBS = \
 	-lfvOptions \
 	-lmeshTools \
 	-lfileFormats \
-   -ltopoChangerFvMesh \
+    -ltopoChangerFvMesh \
 	-lfiniteVolume \
 	-ldynamicFvMesh \
-   -ldynamicMesh \
-   -lregionModels \
+    -ldynamicMesh \
+    -lregionModels \
 	-ltwoPhaseMixture \
 	-linterfaceProperties \
 	-limmiscibleIncompressibleTwoPhaseMixture \
-   -lturbulenceModels \
-	-L$(FOAM_USER_LIBBIN) \
-	-lfoamTools \
-	-lVoF
+    -lturbulenceModels \
+	-lVoF \
+	-L$(FOAM_USER_LIBBIN)

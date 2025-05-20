@@ -26,13 +26,13 @@ License
 \*---------------------------------------------------------------------------*/
  
 #include "ibmGeometryData.H"
+
 #include "cutCellIso.H"
 #include "cutFaceIso.H"
 #include "searchableSurfaces.H"
-#include "foamTool.H"
  
 
-HashTable<ibmGeometryData> Foam::ibmGeometryData::geoData_;
+Foam::HashTable<Foam::ibmGeometryData> Foam::ibmGeometryData::geoData_;
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 bool Foam::ibmGeometryData::updated()
@@ -94,7 +94,7 @@ void Foam::ibmGeometryData::correct()
     volVectorField& U = mesh_.lookupObjectRef<volVectorField>("U");
     surfaceScalarField& phi = mesh_.lookupObjectRef<surfaceScalarField>("phi");
 
-    autoPtr<advectionSchemes> advector_(advectionSchemes::New(alpha,phi,U));
+    advector_ = advectionSchemes::New(alpha,phi,U);
     advector_->surf().reconstruct();
     
     computeDeltaQuotient
@@ -105,12 +105,18 @@ void Foam::ibmGeometryData::correct()
     );
 }
 
-tmp<scalarField> Foam::ibmGeometryData::computeDistance()
+Foam::tmp<Foam::scalarField> Foam::ibmGeometryData::computeDistance()
 {
-    dictionary dict = foamTools::readDict
+    IOdictionary dict
     (
-        mesh_,
-        foamTools::dictFile(mesh_, "distances/stlDict")
+        IOobject
+        (
+            "stlDict",
+            mesh_.time().system(),
+            mesh_.time(),
+            IOobject::MUST_READ,
+            IOobject::NO_WRITE
+        )
     );
 
     autoPtr<searchableSurfaces> geomPtr_(nullptr);
@@ -173,7 +179,7 @@ tmp<scalarField> Foam::ibmGeometryData::computeDistance()
 }
 
 
-tmp<volScalarField> Foam::ibmGeometryData::computeAlpha(tmp<scalarField> distance)
+Foam::tmp<Foam::volScalarField> Foam::ibmGeometryData::computeAlpha(tmp<scalarField> distance)
 {
     tmp<volScalarField> alphaPtr;
     alphaPtr.reset
@@ -185,7 +191,7 @@ tmp<volScalarField> Foam::ibmGeometryData::computeAlpha(tmp<scalarField> distanc
                 "alpha.ibm",
                 mesh_.time().timeName(),
                 mesh_,
-                IOobject::MUST_READ,
+                IOobject::READ_IF_PRESENT,
                 IOobject::AUTO_WRITE
             ),
             mesh_,
@@ -302,7 +308,7 @@ void Foam::ibmGeometryData::computeDeltaQuotient
     }
 }
 
-scalar Foam::ibmGeometryData::intersection
+Foam::scalar Foam::ibmGeometryData::intersection
 (
     const vector& c_1, 
     const vector& c_2, 

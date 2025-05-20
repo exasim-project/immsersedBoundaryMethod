@@ -31,8 +31,6 @@ License
 #include "fvcGrad.H"
 #include "fvMatrices.H"
 #include "unitConversion.H"
-#include "cutCellIso.H"
-#include "cutFaceIso.H"
 #include "searchableSurfaces.H"
  
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

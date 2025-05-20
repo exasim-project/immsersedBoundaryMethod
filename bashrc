@@ -2,10 +2,10 @@ SOURCE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 
 # Check if OpenFOAMv-2106 has been sourced
-if [ "$FOAM_API" != "2106" ]; then
-    echo "Error: OpenFOAM-v2106 is not sourced. Please source OpenFOAM-v2106 and try again."
-    return;
-fi
+# if [ "$FOAM_API" != "2106" ]; then
+#     echo "Error: OpenFOAM-v2106 is not sourced. Please source OpenFOAM-v2106 and try again."
+#     return;
+# fi
 
 
 #set GIT_ROOT_DIR if it was not already set

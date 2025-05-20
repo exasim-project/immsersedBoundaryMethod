@@ -1,16 +1,4 @@
-[submodule "code/multiMultiFoam"]
-	path = code/multiMultiFoam
-	url = git@gitlab.kit.edu:kit/istm/research/multimultifoam.git
-	branch = add_cfdFunctions_review
-[submodule "code/twoPhaseFlow"]
-	path = code/twoPhaseFlow
-	url = git@gitlab.kit.edu:kit/istm/research/multiMultiFoam_thirdParty/twoPhaseFlow.git
-	branch = main
-[submodule "code/mmf_scripts"]
-	path = code/mmf_scripts
-	url = git@gitlab.kit.edu:kit/istm/research/multiMultiFoam_extend/scripts.git
-	branch = main
-[submodule "code/multiDimAMR"]
-	path = code/multiDimAMR
-	url = git@gitlab.kit.edu:kit/istm/research/multiMultiFoam_thirdParty/multiDimAMR.git
-	branch = v2106
+[submodule "TwoPhaseFlow"]
+	path = code/TwoPhaseFlow
+	url = https://github.com/DLR-RY/TwoPhaseFlow.git
+	branch = of2206

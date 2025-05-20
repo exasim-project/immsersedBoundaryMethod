@@ -39,8 +39,8 @@ SourceFiles
 #ifndef ibmGeometryData_H
 #define ibmGeometryData_H
  
+#include "dynamicFvMesh.H"
 #include "laplacianScheme.H"
-#include "indicator.H"
 #include "advectionSchemes.H"
  
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -62,6 +62,7 @@ protected:
     label timeIndex_;
 
     static HashTable<ibmGeometryData> geoData_;
+    autoPtr<advectionSchemes> advector_;
 
     bool updated();
     void update();

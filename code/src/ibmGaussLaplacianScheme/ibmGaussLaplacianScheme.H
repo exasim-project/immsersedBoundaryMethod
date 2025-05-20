@@ -42,7 +42,6 @@ SourceFiles
 #define ibmGaussLaplacianScheme_H
  
 #include "laplacianScheme.H"
-#include "indicator.H"
 #include "advectionSchemes.H"
 
 #include "ibmGeometryData.H"
