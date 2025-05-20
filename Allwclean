@@ -22,14 +22,7 @@ if ! echo "$LD_LIBRARY_PATH" | tr ':' '\n' | grep -q "$GIT_ROOT_DIR"; then
     echo "Use 'unsetVariables; source bashrc' or open a new terminal."
 fi
 
-
-echo "Cleaning multiMultiFoam..." 
-$SOURCE_DIR/code/multiMultiFoam/Allwclean
-
-echo "Cleaning multiDimAMR..." 
-$SOURCE_DIR/code/multiDimAMR/Allwclean
-
 echo "Cleaning twoPhaseFlow..."
-wclean libso $SOURCE_DIR/code/twoPhaseFlow/code/ThirdParty/src/VoF
+wclean libso $SOURCE_DIR/code/TwoPhaseFlow/src/VoF
 
 

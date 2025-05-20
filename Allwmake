@@ -4,10 +4,10 @@ cd ${0%/*} || exit 1
 SOURCE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Check if OpenFOAMv-2106 has been sourced
-if [ "$FOAM_API" != "2106" ]; then
-    echo "Error: OpenFOAM-v2106 is not sourced. Please source OpenFOAM-v2106 and try again."
-    exit 0;
-fi
+# if [ "$FOAM_API" != "2106" ]; then
+#     echo "Error: OpenFOAM-v2106 is not sourced. Please source OpenFOAM-v2106 and try again."
+#     exit 0;
+# fi
 
 
 #check if GIT_ROOT_DIR was not already set
@@ -30,24 +30,9 @@ if [ "$SOURCE_DIR" == "$GIT_ROOT_DIR" ]; then
         echo $GIT_ROOT_DIR
 fi
 
-#update git submodules if neccessary
-if [ "$SOURCE_DIR" != "$GIT_ROOT_DIR" ]; then
-    echo "'GIT_ROOT_DIR' is not this directory. Skipping initialization of submodules."
-else 
-    source $LOCAL_SCRIPT_PATH/bash/git
-    updateGitSubmodules
-fi
-
-
-echo "Compiling multiMultiFoam..." 
-$SOURCE_DIR/code/multiMultiFoam/Allwmake
-
-echo "Compiling multiDimAMR..." 
-$SOURCE_DIR/code/multiDimAMR/Allwmake
-
 echo "Compiling twoPhaseFlow..."
-$SOURCE_DIR/code/twoPhaseFlow/Allwmake.pre
-wmake -j8 libso $SOURCE_DIR/code/twoPhaseFlow/code/ThirdParty/src/VoF
+wmake -j8 libso $SOURCE_DIR/code/TwoPhaseFlow/src/VoF
 
+echo "Compiling soIBM..."
 wmake -j8 code/src
 
