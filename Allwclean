@@ -19,4 +19,6 @@ fi
 echo "Cleaning twoPhaseFlow..."
 wclean libso $SOURCE_DIR/code/TwoPhaseFlow/src/VoF
 
+echo "Cleaning soIBM..."
+wclean code/src
 
