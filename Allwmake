@@ -23,6 +23,8 @@ if [ "$SOURCE_DIR" == "$GIT_ROOT_DIR" ]; then
         echo $GIT_ROOT_DIR
 fi
 
+git submodule update --init --recursive --remote
+
 echo "Compiling twoPhaseFlow..."
 wmake -j8 libso $SOURCE_DIR/code/TwoPhaseFlow/src/VoF
 
