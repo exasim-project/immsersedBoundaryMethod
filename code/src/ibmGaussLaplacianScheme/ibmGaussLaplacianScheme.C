@@ -110,7 +110,7 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
             const label& facei = mesh.cells()[celli][i];
             if (mesh.isInternalFace(facei)) //Damit keine Werte auf den Rändern berücksichtigt werden.
             {
-                volCentreCorrection[celli] += surfCentreCorrection[facei];
+                volCentreCorrection[celli] += surfCentreCorrection[facei] * geoData().vofField()[celli];
             }
         }
     }

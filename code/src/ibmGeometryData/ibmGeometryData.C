@@ -62,7 +62,7 @@ void Foam::ibmGeometryData::correct()
     {
         vofFieldPtr_.reset
         (
-            new volScalarField( "vofField", pos(alpha-0.5) )
+            new volScalarField( "vofField", pos(alpha-0.5-1e-6) )
         );
     }
 
