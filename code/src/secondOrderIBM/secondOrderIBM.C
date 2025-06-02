@@ -104,10 +104,22 @@ void Foam::fv::secondOrderIBM::constrain
         Info << geometryName_ << " not found in " << ibmGeometryData::geoDataTable().toc() << endl;
         return; 
     }
-    Info << " Correcting U and phi. " << endl;
 
-    volScalarField& fluid = ibmGeometryData::geoDataTable()[geometryName_].vofField();
-    eqn.diag() += max(eqn.diag())*(1-fluid);
+    Info << "Correcting U and phi." << endl;
+
+    const volScalarField& fluid = ibmGeometryData::geoDataTable()[geometryName_].vofField();
+    labelList cells;
+
+    forAll(fluid, celli)
+    {
+        // Fluid is where VoF field = 1
+        if (fluid[celli] < 1) 
+        {
+            cells.append(celli);
+        }
+    }
+
+    eqn.setValues(cells, vector(0.0, 0.0, 0.0));
 }
 
 
