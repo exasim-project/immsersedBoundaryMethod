@@ -99,6 +99,13 @@ void Foam::fv::secondOrderIBM::constrain
     const label fieldi
 )
 {
+}
+
+void Foam::fv::secondOrderIBM::correct
+(
+    volVectorField& U
+)
+{
     if(!ibmGeometryData::geoDataTable().found(geometryName_))
     { 
         Info << geometryName_ << " not found in " << ibmGeometryData::geoDataTable().toc() << endl;
@@ -115,11 +122,9 @@ void Foam::fv::secondOrderIBM::constrain
         // Fluid is where VoF field = 1
         if (fluid[celli] < 1) 
         {
-            cells.append(celli);
+            U[celli] = vector(0.0, 0.0, 0.0);
         }
     }
-
-    eqn.setValues(cells, vector(0.0, 0.0, 0.0));
 }
 
 
