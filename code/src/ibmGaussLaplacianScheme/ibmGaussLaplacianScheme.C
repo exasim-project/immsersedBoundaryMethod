@@ -115,6 +115,12 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
         }
     }
 
+    if(mesh.time().outputTime())
+    {
+        geoData().vofField().write();
+        volCentreCorrection.write();
+    }
+
     fvm.diag() = volCentreCorrection.primitiveField();
     fvm.upper() = -faceCorrection.primitiveField();
 

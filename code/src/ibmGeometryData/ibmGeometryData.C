@@ -62,7 +62,7 @@ void Foam::ibmGeometryData::correct()
     {
         vofFieldPtr_.reset
         (
-            new volScalarField( "vofField", pos(alpha-0.5-1e-6) )
+            new volScalarField( "vofField", pos(alpha-0.5-1e-6) ) // Achtung: Extrem wichtig, dass hier ein "-" und kein "+" vor der 1e-6 steht!!!
         );
     }
 
@@ -241,6 +241,28 @@ void Foam::ibmGeometryData::computeDeltaQuotient
     surfaceScalarField& delta_quotient_ = deltaQuotientPtr_();
     surfaceScalarField& vofGrad_ = vofGradPtr_();
     volScalarField& vofField_ = vofFieldPtr_();
+
+    volScalarField isInterfacecell
+    (
+        IOobject
+        (
+            "isInterfacecell",
+            vofField_.instance(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh_,
+        dimensionedScalar("isInterfacecell", dimless, -1)
+    );
+    forAll(mesh_.C(), celli){
+        if(isInterfaceCell[celli]){
+            isInterfacecell[celli] = 1;
+        }else{
+            isInterfacecell[celli] = 0;
+        }
+    }
+    isInterfacecell.write();
     
     forAll(delta_quotient_, i){
 
@@ -262,18 +284,22 @@ void Foam::ibmGeometryData::computeDeltaQuotient
                 {
                     dist_ownerInterface = intersection(cOwneri, cNeighbouri, interfaceCentre[owneri], interfaceNormal[owneri]);
                 }
-                if(isInterfaceCell[neighbouri])
+                if(isInterfaceCell[neighbouri]) //Es ist korrekt, dass hier keine else if() ist, da der Fall, dass beide Zellen ein Interface haben, abgedeckt sein muss.
                 {
                     dist_neighbourInterface = intersection(cOwneri, cNeighbouri, interfaceCentre[neighbouri], interfaceNormal[neighbouri]);
                 }
 
-                if
-                (
+                if(
+                    !isInterfaceCell[owneri] && !isInterfaceCell[neighbouri]    //Das ist der Fall, wenn das Interface exakt auf einer Gitterfläche liegt.
+                ){
+                    delta_quotient_[i] = 1/(intersection(cOwneri, cNeighbouri, mesh_.Cf()[i], mesh_.Sf()[i]/mesh_.magSf()[i]) + SMALL);
+                }
+                else if(
                     dist_ownerInterface <= dist_neighbourInterface &&
                     dist_ownerInterface >= 0
                 )
                 {
-                    delta_quotient_[i] = 1/(dist_ownerInterface + SMALL);
+                    delta_quotient_[i] = 1/(dist_ownerInterface + SMALL); //Evtl. SMALL in einen Wert ändern, der im Bereich des num. Fehlers liegt, um negative dist_* zu umgehen.
                 }
                 else
                 {
@@ -291,8 +317,12 @@ void Foam::ibmGeometryData::computeDeltaQuotient
                     dist_neighbourInterface = intersection(cNeighbouri, cOwneri, interfaceCentre[neighbouri], interfaceNormal[neighbouri]);
                 }
                 
-                if
-                (
+                if(
+                    !isInterfaceCell[owneri] && !isInterfaceCell[neighbouri]    //Das ist der Fall, wenn das Interface exakt auf einem Gitter face liegt.
+                ){
+                    delta_quotient_[i] = 1/(intersection(cNeighbouri, cOwneri, mesh_.Cf()[i], mesh_.Sf()[i]/mesh_.magSf()[i]) + SMALL);
+                }
+                else if(
                     dist_ownerInterface <= dist_neighbourInterface &&
                     dist_ownerInterface >= 0
                 )
