@@ -171,6 +171,11 @@ public:
             const label fieldi
         );
 
+        virtual void correct
+        (
+            volVectorField& U
+        );
+
 
         //- Read source dictionary
         virtual bool read(const dictionary& dict);
