@@ -62,7 +62,7 @@ void Foam::ibmGeometryData::correct()
     {
         vofFieldPtr_.reset
         (
-            new volScalarField( "vofField", pos(alpha-0.5-1e-6) ) // Achtung: Extrem wichtig, dass hier ein "-" und kein "+" vor der 1e-6 steht!!!
+            new volScalarField( "vofField", pos(alpha - 0.5 - 1e-6) ) // Achtung: Extrem wichtig, dass hier ein "-" und kein "+" vor der 1e-6 steht!!!
         );
     }
 
@@ -242,6 +242,7 @@ void Foam::ibmGeometryData::computeDeltaQuotient
     surfaceScalarField& vofGrad_ = vofGradPtr_();
     volScalarField& vofField_ = vofFieldPtr_();
 
+    //################################################
     volScalarField isInterfacecell
     (
         IOobject
@@ -263,6 +264,21 @@ void Foam::ibmGeometryData::computeDeltaQuotient
         }
     }
     isInterfacecell.write();
+
+    volScalarField delQuoKlEins
+    (
+        IOobject
+        (
+            "delQuoKlEins",
+            vofField_.instance(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh_,
+        dimensionedScalar("delQuoKlEins", dimless, 0)
+    );
+    //################################################
     
     forAll(delta_quotient_, i){
 
@@ -292,7 +308,7 @@ void Foam::ibmGeometryData::computeDeltaQuotient
                 if(
                     !isInterfaceCell[owneri] && !isInterfaceCell[neighbouri]    //Das ist der Fall, wenn das Interface exakt auf einer Gitterfläche liegt.
                 ){
-                    delta_quotient_[i] = 1/(intersection(cOwneri, cNeighbouri, mesh_.Cf()[i], mesh_.Sf()[i]/mesh_.magSf()[i]) + SMALL);
+                    delta_quotient_[i] = 1/intersection(cOwneri, cNeighbouri, mesh_.Cf()[i], mesh_.Sf()[i]/mesh_.magSf()[i]);
                 }
                 else if(
                     dist_ownerInterface <= dist_neighbourInterface &&
@@ -320,7 +336,7 @@ void Foam::ibmGeometryData::computeDeltaQuotient
                 if(
                     !isInterfaceCell[owneri] && !isInterfaceCell[neighbouri]    //Das ist der Fall, wenn das Interface exakt auf einem Gitter face liegt.
                 ){
-                    delta_quotient_[i] = 1/(intersection(cNeighbouri, cOwneri, mesh_.Cf()[i], mesh_.Sf()[i]/mesh_.magSf()[i]) + SMALL);
+                    delta_quotient_[i] = 1/intersection(cNeighbouri, cOwneri, mesh_.Cf()[i], mesh_.Sf()[i]/mesh_.magSf()[i]);
                 }
                 else if(
                     dist_ownerInterface <= dist_neighbourInterface &&
@@ -334,8 +350,18 @@ void Foam::ibmGeometryData::computeDeltaQuotient
                     delta_quotient_[i] = 1/(dist_neighbourInterface + SMALL);
                 }
             }
+
+            /*if(delta_quotient_[i] < 1){
+                if(vofField_[owneri]   ==  1){
+                    delQuoKlEins[owneri] = delta_quotient_[i];
+                }else{
+                    delQuoKlEins[neighbouri] = delta_quotient_[i];
+                }
+            }*/
+
         }
     }
+    //delQuoKlEins.write();
 }
 
 Foam::scalar Foam::ibmGeometryData::intersection
@@ -349,7 +375,15 @@ Foam::scalar Foam::ibmGeometryData::intersection
     const scalar& dividend = normal & (c_E - c_1);
     const scalar& divisor = normal & (c_2 - c_1);
     
-    return dividend/(divisor + SMALL);
+//clip funktion verwenden void Foam::isoAdvection::applyBruteForceBounding()
+
+    if(dividend/(divisor + SMALL) >= 1){
+        return (1 - SMALL);
+    }else if(dividend/(divisor + SMALL) < 1e-3){
+        return 1e-3;
+    }else{
+        return dividend/(divisor + SMALL);
+    }
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 Foam::ibmGeometryData::ibmGeometryData(const dynamicFvMesh& mesh)
