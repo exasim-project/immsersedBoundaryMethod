@@ -30,4 +30,5 @@ wmake -j8 libso $SOURCE_DIR/code/TwoPhaseFlow/src/VoF
 
 echo "Compiling soIBM..."
 wmake -j8 code/src
+wmake -j8 code/app/IBMFoam
 
