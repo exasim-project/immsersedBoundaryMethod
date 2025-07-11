@@ -119,14 +119,6 @@ void Foam::fv::secondOrderIBM::correct
  
 }
 
-void Foam::fv::secondOrderIBM::correct
-(
-    volVectorField& U
-)
-{
-}
-
-
 bool Foam::fv::secondOrderIBM::read(const dictionary& dict)
 {
     NotImplemented;

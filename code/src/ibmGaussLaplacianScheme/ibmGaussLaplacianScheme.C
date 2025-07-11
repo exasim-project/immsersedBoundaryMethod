@@ -91,6 +91,15 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
     surfaceScalarField surfCentreCorrection(gammaMagSf*(1.0-geoData().deltaQuotient())*mag(geoData().vofGrad())); 
     surfaceScalarField faceCorrection(gammaMagSf*mag(geoData().vofGrad()));
 
+    forAll(faceCorrection, facei){    // Wenn Unterschied zwischen upper und lower gemacht werden soll.
+        if(geoData().ownerCorrection()[facei]){    //Wenn Owner korrigiert wird, muss faceCorrection in lower.
+            fvm.lower()[facei] = -faceCorrection.primitiveField()[facei];
+        }else{
+            fvm.upper()[facei] = -faceCorrection.primitiveField()[facei];
+        }
+    }
+    //fvm.upper() = -faceCorrection.primitiveField(); // Wenn kein Unterschied zwischen upper und lower gemacht werden soll.
+
     volScalarField volCentreCorrection
     (
         IOobject
@@ -122,7 +131,6 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
     }
 
     fvm.diag() = volCentreCorrection.primitiveField();
-    fvm.upper() = -faceCorrection.primitiveField();
 
 
     forAll(vf.boundaryField(), patchi)  // Wenn auskommentiert: RB werden am Gitterrand nicht mehr angewendet

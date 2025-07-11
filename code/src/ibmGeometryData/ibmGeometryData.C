@@ -50,6 +50,7 @@ void Foam::ibmGeometryData::update()
         deltaQuotientPtr_.clear();
         vofGradPtr_.clear();
         vofFieldPtr_.clear();
+        ownerCorrectionPtr_.clear();
         correct();
     }
 }
@@ -89,6 +90,11 @@ void Foam::ibmGeometryData::correct()
     if(!vofGradPtr_.valid())
     {
         vofGradPtr_.reset(new surfaceScalarField(fvc::snGrad( vofFieldPtr_() )));
+    }
+
+    if(!ownerCorrectionPtr_.valid())
+    {
+        ownerCorrectionPtr_.reset(new boolList(deltaQuotientPtr_().size(), false));
     }
 
     volVectorField& U = mesh_.lookupObjectRef<volVectorField>("U");
@@ -241,6 +247,7 @@ void Foam::ibmGeometryData::computeDeltaQuotient
     surfaceScalarField& delta_quotient_ = deltaQuotientPtr_();
     surfaceScalarField& vofGrad_ = vofGradPtr_();
     volScalarField& vofField_ = vofFieldPtr_();
+    boolList& ownerCorrection_ = ownerCorrectionPtr_();
 
     //################################################
     volScalarField isInterfacecell
@@ -295,6 +302,7 @@ void Foam::ibmGeometryData::computeDeltaQuotient
 
             if( vofField_[owneri]   ==  1 )
             {  // Dann muss Owner korrigiert werden.
+                ownerCorrection_[i] = true;
 
                 if(isInterfaceCell[owneri])
                 {
@@ -361,7 +369,6 @@ void Foam::ibmGeometryData::computeDeltaQuotient
 
         }
     }
-    //delQuoKlEins.write();
 }
 
 Foam::scalar Foam::ibmGeometryData::intersection

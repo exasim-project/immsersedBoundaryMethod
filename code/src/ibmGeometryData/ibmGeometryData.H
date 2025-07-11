@@ -81,6 +81,7 @@ protected:
     autoPtr<surfaceScalarField> deltaQuotientPtr_;
     autoPtr<surfaceScalarField> vofGradPtr_;
     autoPtr<volScalarField> vofFieldPtr_;
+    autoPtr<boolList> ownerCorrectionPtr_;
 
     scalar intersection
     (
@@ -102,6 +103,7 @@ public:
     surfaceScalarField& deltaQuotient() { update(); return deltaQuotientPtr_(); }
     volScalarField& vofField()          { update(); return vofFieldPtr_(); }
     surfaceScalarField& vofGrad()       { update(); return vofGradPtr_(); }
+    boolList& ownerCorrection()         { update(); return ownerCorrectionPtr_(); }
     
     static HashTable<ibmGeometryData>& geoDataTable(){ return geoData_; }
 };
