@@ -38,9 +38,7 @@ mesh.setFluxRequired(p.name());
 singlePhaseTransportModel laminarTransport(U, phi);
 
 const dynamicFvMesh& dynMesh = static_cast<const dynamicFvMesh&>(mesh);
-
 const word geoDataName = mesh.time().controlDict().get<word>("geometry");
-
 if(!ibmGeometryData::geoDataTable().found(geoDataName))
 {
     ibmGeometryData::geoDataTable().insert(geoDataName, ibmGeometryData(dynMesh));

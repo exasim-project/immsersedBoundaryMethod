@@ -2,6 +2,13 @@ volScalarField rAU(1.0/UEqn.A());
 volVectorField HbyA(constrainHbyA(rAU*UEqn.H(), U, p));
 surfaceScalarField phiHbyA("phiHbyA", fvc::flux(HbyA));
 
+// phiHbyA auf Surface zu 0 setzen, wenn Interface zwischen Zellen liegt!
+forAll(phiHbyA, facei){
+    if(ibmGeometryData::geoDataTable()[geoDataName].vofGrad()[facei] != 0){
+        phiHbyA[facei] = 0;
+    }
+}
+
 if (pimple.ddtCorr())
 {
     phiHbyA += MRF.zeroFilter(fvc::interpolate(rAU)*fvc::ddtCorr(U, phi, Uf));
@@ -38,12 +45,30 @@ if (pimple.nCorrPISO() <= 1)
 // Update the pressure BCs to ensure flux consistency
 constrainPressure(p, U, phiHbyA, rAtU(), MRF);
 
+//surfaceScalarField phirAtU erstellen welches auf den Surface 0 sind bei dem Interface zwischen Zellen liegt!
+surfaceScalarField rAtUFace("rAtUFace", fvc::interpolate(rAtU()));
+forAll(rAtUFace, facei){
+    if(ibmGeometryData::geoDataTable()[geoDataName].vofGrad()[facei] != 0){
+        if(ibmGeometryData::geoDataTable()[geoDataName].ownerCorrection()[facei]){
+            rAtUFace[facei] = rAtU()[mesh.faceOwner()[facei]]; //face wert wird auf 1/A[korrigierte Zelle] gesetzt (darf nicht zu klein sein)
+        }else{
+            rAtUFace[facei] = rAtU()[mesh.faceNeighbour()[facei]];
+        }
+    }
+}
+
 // Non-orthogonal pressure corrector loop
 while (pimple.correctNonOrthogonal())
 {
-    fvScalarMatrix pEqn
+    /*fvScalarMatrix pEqn
     (
         fvm::laplacian(rAtU(), p) == fvc::div(phiHbyA)
+    );*/
+
+    // pEqn mit korrigiertem rAtU
+    fvScalarMatrix pEqn
+    (
+        fvm::laplacian(rAtUFace, p) == fvc::div(phiHbyA)
     );
 
     pEqn.setReference(pRefCell, pRefValue);
