@@ -1,0 +1,10 @@
+
+L_x_min         -100;
+L_x_max         200;
+L_y_min         -50;
+L_y_max         50;
+
+L_z             50;
+
+delta_x         1.0;
+
