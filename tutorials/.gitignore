@@ -1,0 +1,16 @@
+mmfIbm
+channelMixing
+
+results
+postProcessing
+dynamicCode
+polyMesh
+log.*
+
+0
+0.[0-9]*
+[1-9]*
+*.foam
+nohup.out
+
+*.png
