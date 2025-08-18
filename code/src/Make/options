@@ -17,6 +17,7 @@ EXE_INC = \
     -I$(LIB_SRC)/TurbulenceModels/turbulenceModels/lnInclude \
     -I$(LIB_SRC)/TurbulenceModels/incompressible/lnInclude \
     -I$(LIB_SRC)/fvOptions/lnInclude \
+	-I$(LIB_SRC)/OpenFOAM/lnInclude \
 	-Wno-old-style-cast \
 	-Wno-deprecated-copy 
 
@@ -35,4 +36,5 @@ LIB_LIBS = \
 	-limmiscibleIncompressibleTwoPhaseMixture \
     -lturbulenceModels \
 	-lVoF \
+	-lOpenFOAM \
 	-L$(FOAM_USER_LIBBIN)

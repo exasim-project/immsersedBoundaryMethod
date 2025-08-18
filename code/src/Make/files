@@ -1,5 +1,11 @@
 ibmGaussLaplacianScheme/ibmGaussLaplacianSchemeRunTime.C
 ibmGeometryData/ibmGeometryData.C
+GAMGIBM/GAMGIBMSolver.C
+GAMGIBM/GAMGIBMSolverScale.C
+GAMGIBM/GAMGIBMSolverInterpolate.C
+GAMGIBM/GAMGIBMSolverAgglomerateMatrix.C
+GAMGIBM/GAMGIBMSolverSolve.C
+smoothSolverIBM/smoothSolverIBM.C
 
 secondOrderIBM/secondOrderIBM.C
 
