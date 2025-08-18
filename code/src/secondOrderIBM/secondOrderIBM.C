@@ -108,7 +108,7 @@ void Foam::fv::secondOrderIBM::constrain
     Info << "Correcting U and phi." << endl;
 
     volScalarField& fluid = ibmGeometryData::geoDataTable()[geometryName_].vofField();
-    eqn.diag() += max(eqn.diag())*(1-fluid)*100;   // Faktor muss erhöht werden (Hier: 100)
+    eqn.diag() += max(eqn.diag())*(1-fluid)*1e12;   // Faktor muss erhöht werden (Hier: 100)
 }
 
 void Foam::fv::secondOrderIBM::correct
