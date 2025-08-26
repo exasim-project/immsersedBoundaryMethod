@@ -117,6 +117,7 @@ class secondOrderIBM
     // Private Data
 
         const dimensionedScalar nu_;
+        const scalar penalty_;
         const word geometryName_;
 
 

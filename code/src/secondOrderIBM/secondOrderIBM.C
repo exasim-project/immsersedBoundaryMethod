@@ -57,6 +57,7 @@ Foam::fv::secondOrderIBM::secondOrderIBM
 :
     option(sourceName, modelType, dict, mesh),
     nu_(dict.get<dimensionedScalar>("nu")),
+    penalty_(dict.getOrDefault<scalar>("penalty", 1e12)),
     geometryName_(dict.get<word>("geometry"))
 {
     coeffs_.readEntry("fields", fieldNames_);
@@ -108,7 +109,7 @@ void Foam::fv::secondOrderIBM::constrain
     Info << "Correcting U and phi." << endl;
 
     volScalarField& fluid = ibmGeometryData::geoDataTable()[geometryName_].vofField();
-    eqn.diag() += max(eqn.diag())*(1-fluid)*1e12;   // Faktor muss erhöht werden (Hier: 100)
+    eqn.diag() += max(eqn.diag())*(1-fluid)*penalty_;   // Faktor muss erhöht werden (Hier: 100)
 }
 
 void Foam::fv::secondOrderIBM::correct
