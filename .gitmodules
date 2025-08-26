@@ -1,4 +1,0 @@
-[submodule "TwoPhaseFlow"]
-	path = code/TwoPhaseFlow
-	url = https://github.com/DLR-RY/TwoPhaseFlow.git
-	branch = of2106
