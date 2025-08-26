@@ -2,7 +2,7 @@ SOURCE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 
 # Check if OpenFOAMv-2106 has been sourced
-if [ "$FOAM_API" != "2106" ]; then
+if [ "$WM_PROJECT_VERSION" != "v2106" ]; then
     echo "Error: OpenFOAM-v2106 is not sourced. Please source OpenFOAM-v2106 and try again."
     return;
 fi
@@ -18,9 +18,11 @@ if [ -z "$GIT_ROOT_DIR" ]; then
     export LD_LIBRARY_PATH=$FOAM_USER_LIBBIN:$LD_LIBRARY_PATH
 
     export MMF_FOAM_DIR=$SOURCE_DIR/code/multiMultiFoam
+    export TPF_FOAM_DIR=$SOURCE_DIR/code/twoPhaseFlow/code/ThirdParty
 else
     echo "GIT_ROOT_DIR already set:  "$GIT_ROOT_DIR
     echo "MMF_FOAM_DIR already set:  "$MMF_FOAM_DIR
+    echo "TPF_FOAM_DIR already set:  "$TPF_FOAM_DIR
 fi
 
 
@@ -35,11 +37,12 @@ else
 fi
 
 echo
-echo "Use 'unsetVariables' to clear GIT_ROOT_DIR, MMF_FOAM_DIR and LOCAL_SCRIPT_PATH."
+echo "Use 'unsetVariables' to clear GIT_ROOT_DIR, MMF_FOAM_DIR, TPF_FOAM_DIR, LOCAL_PYTHON_PATH and LOCAL_SCRIPT_PATH."
 
 unsetVariables(){
     echo "Clearing variables set by $SOURCE_DIR/bashrc"
     unset GIT_ROOT_DIR
     unset MMF_FOAM_DIR
     unset LOCAL_SCRIPT_PATH
+    unset TPF_FOAM_DIR
 }

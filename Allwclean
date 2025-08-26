@@ -16,8 +16,10 @@ if ! echo "$LD_LIBRARY_PATH" | tr ':' '\n' | grep -q "$GIT_ROOT_DIR"; then
     echo "Use 'unsetVariables; source bashrc' or open a new terminal."
 fi
 
-echo "Cleaning twoPhaseFlow..."
-wclean libso $SOURCE_DIR/code/TwoPhaseFlow/src/VoF
+if [ "$SOURCE_DIR" == "$GIT_ROOT_DIR" ]; then
+    echo "Cleaning twoPhaseFlow..."
+    $SOURCE_DIR/code/twoPhaseFlow/Allwclean
+fi
 
 echo "Cleaning soIBM..."
 wclean code/src

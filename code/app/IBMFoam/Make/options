@@ -9,7 +9,7 @@ EXE_INC = \
     -I$(LIB_SRC)/dynamicMesh/lnInclude \
     -I$(LIB_SRC)/dynamicFvMesh/lnInclude \
     -I../../src/lnInclude \
-    -I../../TwoPhaseFlow/src/VoF/lnInclude
+    -I$(TPF_FOAM_DIR)/src/VoF/lnInclude
 
 EXE_LIBS = \
     -lfiniteVolume \
