@@ -1,0 +1,7 @@
+
+[submodule "code/twoPhaseFlow"]
+	path = code/twoPhaseFlow
+	url = git@gitlab.kit.edu:kit/istm/research/multiMultiFoam_thirdParty/twoPhaseFlow.git
+[submodule "code/mmf_scripts"]
+	path = code/mmf_scripts
+	url = git@gitlab.kit.edu:kit/istm/research/multiMultiFoam_extend/scripts.git
