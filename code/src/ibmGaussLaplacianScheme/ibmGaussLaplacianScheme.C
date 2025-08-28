@@ -44,24 +44,31 @@ namespace fv
 {
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
+
 template<class Type, class GType>
 void ibmGaussLaplacianScheme<Type, GType>::createGeoData(const fvMesh& mesh)
 {
+    if(!geometryName_)
+    {
+        FatalErrorInFunction
+        << "geometryName_ not set." << nl
+        << "Use ibmGaussLaplacianScheme<Type, GType>::setGeometry(const word& name)"
+        << " to set it." << endl
+        << exit(FatalError);
+    }
+
     const dynamicFvMesh& dynMesh = static_cast<const dynamicFvMesh&>(mesh);
 
-    name_ = mesh.time().controlDict().get<word>("geometry");
-
-    if(!ibmGeometryData::geoDataTable().found(name_))
+    if(!ibmGeometryData::geoDataTable().found(*geometryName_))
     {
-        ibmGeometryData::geoDataTable().insert(name_, ibmGeometryData(dynMesh));
+        ibmGeometryData::geoDataTable().insert(*geometryName_, ibmGeometryData(dynMesh));
     }
 }
-
 
 template<class Type, class GType>
 ibmGeometryData& ibmGaussLaplacianScheme<Type, GType>::geoData()
 {
-    return ibmGeometryData::geoDataTable()[name_];
+    return ibmGeometryData::geoDataTable()[*geometryName_];
 }
 
 
@@ -77,6 +84,8 @@ ibmGaussLaplacianScheme<Type, GType>::fvmLaplacianUncorrected
 )
 {
     const fvMesh& mesh = this->mesh();
+    
+    createGeoData(mesh);
 
     tmp<fvMatrix<Type>> tfvm
     (

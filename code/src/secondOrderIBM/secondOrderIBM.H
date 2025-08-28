@@ -120,6 +120,8 @@ class secondOrderIBM
         const scalar penalty_;
         const word geometryName_;
 
+        tmp<laplacianScheme<vector, scalar>> ibmScheme();
+        tmp<volScalarField> nu();
 
 public:
 

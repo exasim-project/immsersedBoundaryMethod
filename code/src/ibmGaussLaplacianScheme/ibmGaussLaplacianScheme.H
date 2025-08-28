@@ -85,11 +85,12 @@ protected:
         void operator=(const ibmGaussLaplacianScheme&) = delete;
 
         word name_;
+        word* geometryName_;
 
         static HashTable<ibmGeometryData> geoData_;
 
         void createGeoData(const fvMesh& mesh);
-
+        
         ibmGeometryData& geoData();
  
  
@@ -106,9 +107,7 @@ public:
         ibmGaussLaplacianScheme(const fvMesh& mesh)
         :
             laplacianScheme<Type, GType>(mesh)
-        {
-            createGeoData(mesh);
-        }
+        {}
  
         
         //- Construct from Istream
@@ -116,9 +115,7 @@ public:
         ibmGaussLaplacianScheme(const fvMesh& mesh, Istream& is)
         :
             laplacianScheme<Type, GType>(mesh, is)
-        {
-            createGeoData(mesh);
-        }
+        {}
  
         //- Construct from mesh, interpolation and snGradScheme schemes
         ibmGaussLaplacianScheme
@@ -129,9 +126,7 @@ public:
         )
         :
             laplacianScheme<Type, GType>(mesh, igs, sngs)
-        {
-            createGeoData(mesh);
-        }
+        {}
  
  
     //- Destructor
@@ -162,6 +157,8 @@ public:
             const GeometricField<GType, fvsPatchField, surfaceMesh>&,
             const GeometricField<Type, fvPatchField, volMesh>&
         );
+
+        void setGeometry(const word& name){ geometryName_ = new word(name); }
 };
  
  
