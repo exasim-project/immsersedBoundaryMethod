@@ -2,12 +2,8 @@ volScalarField rAU(1.0/UEqn.A());
 volVectorField HbyA(constrainHbyA(rAU*UEqn.H(), U, p));
 surfaceScalarField phiHbyA("phiHbyA", fvc::flux(HbyA));
 
-// phiHbyA auf Surface zu 0 setzen, wenn Interface zwischen Zellen liegt!
-forAll(phiHbyA, facei){
-    if(ibmGeometryData::geoDataTable()[geoDataName].vofGrad()[facei] != 0){
-        phiHbyA[facei] = 0;
-    }
-}
+// phiHbyA überall 0, wo Solid oder Interface liegt.
+phiHbyA *= geometryMask;
 
 if (pimple.ddtCorr())
 {
@@ -24,6 +20,11 @@ if (p.needReference())
 {
     fvc::makeRelative(phiHbyA, U);
     adjustPhi(phiHbyA, U, p);
+
+// Muss man hier etwas ändern?
+    // phiHbyA überall 0, wo Solid oder Interface liegt.
+    //phiHbyA *= geometryMask;
+
     fvc::makeAbsolute(phiHbyA, U);
 }
 
@@ -34,6 +35,11 @@ if (pimple.consistent())
     rAtU = 1.0/max(1.0/rAU - UEqn.H1(), 0.1/rAU);
     phiHbyA +=
         fvc::interpolate(rAtU() - rAU)*fvc::snGrad(p)*mesh.magSf();
+
+// Muss man hier etwas ändern?
+    // phiHbyA ebenfalls in solid zu 0 setzen.
+    //phiHbyA *= geometryMask;
+    
     HbyA -= (rAU - rAtU())*fvc::grad(p);
 }
 
@@ -46,7 +52,7 @@ if (pimple.nCorrPISO() <= 1)
 constrainPressure(p, U, phiHbyA, rAtU(), MRF);
 
 //surfaceScalarField phirAtU erstellen welches auf den Surface 0 sind bei dem Interface zwischen Zellen liegt!
-surfaceScalarField rAtUFace("rAtUFace", fvc::interpolate(rAtU()));
+/*surfaceScalarField rAtUFace("rAtUFace", fvc::interpolate(rAtU()));
 forAll(rAtUFace, facei){
     if(ibmGeometryData::geoDataTable()[geoDataName].vofGrad()[facei] != 0){
         if(ibmGeometryData::geoDataTable()[geoDataName].ownerCorrection()[facei]){
@@ -55,21 +61,23 @@ forAll(rAtUFace, facei){
             rAtUFace[facei] = rAtU()[mesh.faceNeighbour()[facei]];
         }
     }
-}
+}*/
 
 // Non-orthogonal pressure corrector loop
 while (pimple.correctNonOrthogonal())
 {
-    /*fvScalarMatrix pEqn
-    (
-        fvm::laplacian(rAtU(), p) == fvc::div(phiHbyA)
-    );*/
-
-    // pEqn mit korrigiertem rAtU
+    // # # # Original pimpleFoam Code # # # //
     fvScalarMatrix pEqn
     (
-        fvm::laplacian(rAtUFace, p) == fvc::div(phiHbyA)
+        fvm::laplacian(rAtU(), p) == fvc::div(phiHbyA)
     );
+    // # # # # # # # # # # # # # # # # # # //
+
+    // pEqn mit korrigiertem rAtU
+    /*fvScalarMatrix pEqn
+    (
+        fvm::laplacian(rAtUFace, p) == fvc::div(phiHbyA)
+    );*/
 
     pEqn.setReference(pRefCell, pRefValue);
 
@@ -79,6 +87,11 @@ while (pimple.correctNonOrthogonal())
     {
         phi = phiHbyA - pEqn.flux();
     }
+
+// Hier sollte phi immernoch an den relevanten Stellen 0 sein.
+    // phiHbyA überall 0, wo Solid oder Interface liegt.
+    //phi *= geometryMask;
+
 }
 
 #include "continuityErrs.H"

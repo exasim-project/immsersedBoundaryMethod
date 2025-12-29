@@ -44,6 +44,32 @@ if(!ibmGeometryData::geoDataTable().found(geoDataName))
     ibmGeometryData::geoDataTable().insert(geoDataName, ibmGeometryData(dynMesh));
 }
 
+//  #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   //
+// Hier phiMask-Feld erzeugen!
+surfaceScalarField geometryMask
+(
+    IOobject
+    (
+        "geometryMask",
+        runTime.timeName(),
+        mesh,
+        IOobject::NO_READ,
+        IOobject::AUTO_WRITE
+    ),
+    mesh,
+    dimensionedScalar("one", dimless, 1.0)
+);
+
+forAll(phi, facei)
+{
+    if( ibmGeometryData::geoDataTable()[geoDataName].vofField()[mesh.faceOwner()[facei]] == 0 ||
+        ibmGeometryData::geoDataTable()[geoDataName].vofField()[mesh.faceNeighbour()[facei]] == 0)
+    {   // Alle faces die entweder vollständig im Solid liegen oder ein Interface dazwischen haben.
+        geometryMask[facei] = 0.0;
+    }
+}
+//  #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   //
+
 autoPtr<incompressible::turbulenceModel> turbulence
 (
     incompressible::turbulenceModel::New(U, phi, laminarTransport)

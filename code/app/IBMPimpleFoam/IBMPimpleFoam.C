@@ -153,6 +153,8 @@ int main(int argc, char *argv[])
                 }
             }
 
+            //phi *= geometryMask; //flux in solid is 0
+
             #include "UEqn.H"
 
             // --- Pressure corrector loop
