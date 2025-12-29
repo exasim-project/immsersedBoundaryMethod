@@ -36,6 +36,8 @@ else
     echo "LOCAL_SCRIPT_PATH already set:  "$LOCAL_SCRIPT_PATH
 fi
 
+export PATH=$FOAM_USER_APPBIN:$PATH
+
 echo
 echo "Use 'unsetVariables' to clear GIT_ROOT_DIR, MMF_FOAM_DIR, TPF_FOAM_DIR, LOCAL_PYTHON_PATH and LOCAL_SCRIPT_PATH."
 
