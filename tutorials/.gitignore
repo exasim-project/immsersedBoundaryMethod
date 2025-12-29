@@ -14,3 +14,6 @@ log.*
 nohup.out
 
 *.png
+
+processor*
+!ibmAirfoil_multiCore*/[0-9]*
