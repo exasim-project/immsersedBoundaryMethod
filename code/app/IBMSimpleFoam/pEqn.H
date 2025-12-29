@@ -2,6 +2,10 @@
     volScalarField rAU(1.0/UEqn.A());
     volVectorField HbyA(constrainHbyA(rAU*UEqn.H(), U, p));
     surfaceScalarField phiHbyA("phiHbyA", fvc::flux(HbyA));
+
+    // phiHbyA überall 0, wo Solid oder Interface liegt.
+    phiHbyA *= geometryMask;
+
     MRF.makeRelative(phiHbyA);
     adjustPhi(phiHbyA, U, p);
 
