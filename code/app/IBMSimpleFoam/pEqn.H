@@ -3,11 +3,24 @@
     volVectorField HbyA(constrainHbyA(rAU*UEqn.H(), U, p));
     surfaceScalarField phiHbyA("phiHbyA", fvc::flux(HbyA));
 
+    /*volScalarField hOperator(UEqn.H1());
+
+    forAll(phiHbyA, facei)
+    {
+        if(ibmGeometryData::geoDataTable()[geoDataName].vofGrad()[facei] =! 0)
+        {
+            Info << ibmGeometryData::geoDataTable()[geoDataName].vofGrad()[facei] << ", " << hOperator[mesh.faceOwner()[facei]] << ", " << hOperator[mesh.faceNeighbour()[facei]] << endl;
+        }
+    }*/
+
     // phiHbyA überall 0, wo Solid oder Interface liegt.
     phiHbyA *= geometryMask;
 
     MRF.makeRelative(phiHbyA);
     adjustPhi(phiHbyA, U, p);
+
+    // phiHbyA überall 0, wo Solid oder Interface liegt.
+    phiHbyA *= geometryMask;
 
     tmp<volScalarField> rAtU(rAU);
 
@@ -16,6 +29,10 @@
         rAtU = 1.0/(1.0/rAU - UEqn.H1());
         phiHbyA +=
             fvc::interpolate(rAtU() - rAU)*fvc::snGrad(p)*mesh.magSf();
+
+        // phiHbyA überall 0, wo Solid oder Interface liegt.
+        phiHbyA *= geometryMask;
+
         HbyA -= (rAU - rAtU())*fvc::grad(p);
     }
 
@@ -39,6 +56,9 @@
         if (simple.finalNonOrthogonalIter())
         {
             phi = phiHbyA - pEqn.flux();
+
+            // phiHbyA überall 0, wo Solid oder Interface liegt.
+            phi *= geometryMask;
         }
     }
 

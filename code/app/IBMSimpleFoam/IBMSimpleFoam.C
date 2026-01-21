@@ -101,6 +101,9 @@ int main(int argc, char *argv[])
 
         // --- Pressure-velocity SIMPLE corrector
         {
+            // phi überall 0, wo Solid oder Interface liegt.
+            phi *= geometryMask;
+
             #include "UEqn.H"
             #include "pEqn.H"
         }
