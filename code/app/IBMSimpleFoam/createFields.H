@@ -46,11 +46,25 @@ if(!ibmGeometryData::geoDataTable().found(geoDataName))
 
 //  #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   //
 // Hier phiMask-Feld erzeugen!
-surfaceScalarField geometryMask
+surfaceScalarField geometryMask_face
 (
     IOobject
     (
-        "geometryMask",
+        "geometryMask_face",
+        runTime.timeName(),
+        mesh,
+        IOobject::NO_READ,
+        IOobject::NO_WRITE
+    ),
+    mesh,
+    dimensionedScalar("one", dimless, 1.0)
+);
+// Hier UMask-Feld erzeugen!
+volScalarField geometryMask_cell
+(
+    IOobject
+    (
+        "geometryMask_cell",
         runTime.timeName(),
         mesh,
         IOobject::NO_READ,
@@ -59,15 +73,28 @@ surfaceScalarField geometryMask
     mesh,
     dimensionedScalar("one", dimless, 1.0)
 );
+// lokales continuity Field!
+volScalarField continuityField
+(
+    fvc::div(phi)
+);
 
 forAll(phi, facei)
 {
     if( ibmGeometryData::geoDataTable()[geoDataName].vofField()[mesh.faceOwner()[facei]] == 0 ||
         ibmGeometryData::geoDataTable()[geoDataName].vofField()[mesh.faceNeighbour()[facei]] == 0)
     {   // Alle faces die entweder vollständig im Solid liegen oder ein Interface dazwischen haben.
-        geometryMask[facei] = 0.0;
+        geometryMask_face[facei] = 0;
+        geometryMask_cell[mesh.faceOwner()[facei]] = 0;
+        geometryMask_cell[mesh.faceNeighbour()[facei]] = 0;
     }
 }
+
+// U und phi initial auf 0 setzen in und um IBM rum:
+U *= geometryMask_cell;
+phi *= geometryMask_face;
+U.write();
+
 //  #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   //
 
 

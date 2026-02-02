@@ -101,11 +101,63 @@ int main(int argc, char *argv[])
 
         // --- Pressure-velocity SIMPLE corrector
         {
-            // phi überall 0, wo Solid oder Interface liegt.
-            phi *= geometryMask;
-
             #include "UEqn.H"
             #include "pEqn.H"
+
+            continuityField = fvc::div(phi);
+            /*forAll(U, celli)
+            {
+                continuityField[celli] = 0;
+                scalar sumPhi = 0.0;
+                const cell& c = mesh.cells()[celli];
+                forAll(c, facei)
+                {
+                    const label face = c[facei];
+                    if(mesh.isInternalFace(face))
+                    {
+                        if(mesh.owner()[face] == celli){
+                            sumPhi += phi[face];
+                        }else{
+                            sumPhi -= phi[face];
+                        }
+                    }else{
+                        label patchi = mesh.boundaryMesh().whichPatch(face);
+                        if (mesh.boundary()[patchi].size() > 0)
+                        {
+                            const polyPatch& pp = mesh.boundaryMesh()[patchi];
+                            label patchFacei = face - pp.start();
+                            sumPhi += phi.boundaryField()[patchi][patchFacei];
+                        }
+                    }
+                }
+                continuityField[celli] = sumPhi/mesh.V()[celli];
+            }*/
+
+            /*scalar sumOverIBMfaces = 0;
+            scalar sumOverIBMcells = 0;
+            forAll(phi, facei)
+            {
+                if(ibmGeometryData::geoDataTable()[geoDataName].vofGrad()[facei] != 0)
+                {
+                    if(ibmGeometryData::geoDataTable()[geoDataName].vofField()[mesh.owner()[facei]] == 1)
+                    {
+                        sumOverIBMfaces -= phi[facei];
+                    }
+                    else if(ibmGeometryData::geoDataTable()[geoDataName].vofField()[mesh.owner()[facei]] == 0)
+                    {
+                        sumOverIBMfaces += phi[facei];
+                    }
+                }
+            }
+            Info << "Sum over all fluxes over IBMfaces: " << sumOverIBMfaces << endl;
+            forAll(ibmGeometryData::geoDataTable()[geoDataName].vofField(), celli)
+            {
+                if(ibmGeometryData::geoDataTable()[geoDataName].vofField()[celli] == 0)
+                {
+                    sumOverIBMcells += continuityField[celli];
+                }
+            }
+            Info << "Sum over all fluxes over IBMcells: " << sumOverIBMcells << endl;*/
         }
 
         laminarTransport.correct();
