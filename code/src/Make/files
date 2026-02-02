@@ -8,5 +8,6 @@ GAMGIBM/GAMGIBMSolverSolve.C
 smoothSolverIBM/smoothSolverIBM.C
 
 secondOrderIBM/secondOrderIBM.C
+IBMlinear/IBMlinear.C
 
 LIB = $(FOAM_USER_LIBBIN)/libsoIBM

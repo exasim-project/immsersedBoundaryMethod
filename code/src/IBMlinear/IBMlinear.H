@@ -24,7 +24,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::linear
+    Foam::IBMlinear
 
 Group
     grpFvSurfaceInterpolationSchemes
@@ -33,15 +33,17 @@ Description
     Central-differencing interpolation scheme class
 
 SourceFiles
-    linear.C
+    IBMlinear.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef linear_H
-#define linear_H
+#ifndef IBMlinear_H
+#define IBMlinear_H
 
 #include "surfaceInterpolationScheme.H"
 #include "volFields.H"
+
+#include "ibmGeometryData.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -49,42 +51,42 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class linear Declaration
+                           Class IBMlinear Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Type>
-class linear
+class IBMlinear
 :
     public surfaceInterpolationScheme<Type>
 {
     // Private Member Functions
 
         //- No copy assignment
-        void operator=(const linear&) = delete;
+        void operator=(const IBMlinear&) = delete;
 
 
 public:
 
     //- Runtime type information
-    TypeName("linear");
+    TypeName("IBMlinear");
 
 
     // Constructors
 
         //- Construct from mesh
-        linear(const fvMesh& mesh)
+        IBMlinear(const fvMesh& mesh)
         :
             surfaceInterpolationScheme<Type>(mesh)
         {}
 
         //- Construct from Istream
-        linear(const fvMesh& mesh, Istream&)
+        IBMlinear(const fvMesh& mesh, Istream&)
         :
             surfaceInterpolationScheme<Type>(mesh)
         {}
 
         //- Construct from faceFlux and Istream
-        linear
+        IBMlinear
         (
             const fvMesh& mesh,
             const surfaceScalarField&,
@@ -105,9 +107,101 @@ public:
         {
             return this->mesh().surfaceInterpolation::weights();
         }
+
+        //- Return the face-interpolate of the given cell field
+        //  with the given weighting factors dotted with given field Sf
+        template<class SFType>
+        static tmp
+        <
+            GeometricField
+            <
+                typename innerProduct<typename SFType::value_type, Type>::type,
+                fvsPatchField,
+                surfaceMesh
+            >
+        >
+        dotInterpolate
+        (
+            const SFType& Sf,
+            const GeometricField<Type, fvPatchField, volMesh>& vf,
+            const tmp<surfaceScalarField>& tlambdas
+        );
+
+        //- Return the face-interpolate of the given cell field
+        //  with explicit correction dotted with given field Sf
+        virtual
+        tmp
+        <
+            GeometricField
+            <
+                typename innerProduct<vector, Type>::type,
+                fvsPatchField,
+                surfaceMesh
+            >
+        >
+        dotInterpolate
+        (
+            const surfaceVectorField& Sf,
+            const GeometricField<Type, fvPatchField, volMesh>& vf
+        ) const;
+
+        //- Return the face-interpolate of the given tmp cell field
+        //  with explicit correction dotted with given field Sf
+        tmp
+        <
+            GeometricField
+            <
+                typename innerProduct<vector, Type>::type,
+                fvsPatchField,
+                surfaceMesh
+            >
+        >
+        dotInterpolate
+        (
+            const surfaceVectorField& Sf,
+            const tmp<GeometricField<Type, fvPatchField, volMesh>>&
+        ) const;
 };
 
+template<>
+tmp
+<
+    GeometricField
+    <
+        typename innerProduct<vector, scalar>::type,
+        fvsPatchField,
+        surfaceMesh
+    >
+>
+IBMlinear<scalar>::dotInterpolate
+(
+    const surfaceVectorField& Sf,
+    const GeometricField<scalar, fvPatchField, volMesh>&
+) const
+{
+    NotImplemented;
 
+    return
+        tmp
+        <
+            GeometricField
+            <
+                typename innerProduct<vector, scalar>::type,
+                fvsPatchField,
+                surfaceMesh
+            >
+        >
+        (
+            GeometricField
+            <
+                typename innerProduct<vector, scalar>::type,
+                fvsPatchField,
+                surfaceMesh
+            >::null()
+        );
+}
+
+/*
 template<class Type>
 tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
 linearInterpolate(const GeometricField<Type, fvPatchField, volMesh>& vf)
@@ -128,7 +222,7 @@ linearInterpolate(const tmp<GeometricField<Type, fvPatchField, volMesh>>& tvf)
         linearInterpolate(tvf());
     tvf.clear();
     return tinterp;
-}
+}*/
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
