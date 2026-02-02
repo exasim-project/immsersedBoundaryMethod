@@ -51,6 +51,7 @@ void Foam::ibmGeometryData::update()
         vofGradPtr_.clear();
         vofFieldPtr_.clear();
         ownerCorrectionPtr_.clear();
+        alphaPtr_.clear();
         correct();
     }
 }
@@ -58,6 +59,11 @@ void Foam::ibmGeometryData::update()
 void Foam::ibmGeometryData::correct()
 {
     volScalarField alpha(computeAlpha(computeDistance()));
+
+    if(!alphaPtr_.valid())
+    {
+        alphaPtr_.reset(new volScalarField(alpha));
+    }
 
     if(!vofFieldPtr_.valid())
     {
@@ -109,6 +115,11 @@ void Foam::ibmGeometryData::correct()
         advector_->surf().centre(),
         advector_->surf().interfaceCell()
     );
+
+    if(!isInterfaceCellPtr_.valid())
+    {
+        isInterfaceCellPtr_.reset(new boolList(advector_->surf().interfaceCell()));
+    }
 }
 
 Foam::tmp<Foam::scalarField> Foam::ibmGeometryData::computeDistance()

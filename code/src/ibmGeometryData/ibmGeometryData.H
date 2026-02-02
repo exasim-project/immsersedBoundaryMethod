@@ -82,6 +82,8 @@ protected:
     autoPtr<surfaceScalarField> vofGradPtr_;
     autoPtr<volScalarField> vofFieldPtr_;
     autoPtr<boolList> ownerCorrectionPtr_;
+    autoPtr<volScalarField> alphaPtr_;
+    autoPtr<boolList> isInterfaceCellPtr_;
 
     scalar intersection
     (
@@ -104,6 +106,8 @@ public:
     volScalarField& vofField()          { update(); return vofFieldPtr_(); }
     surfaceScalarField& vofGrad()       { update(); return vofGradPtr_(); }
     boolList& ownerCorrection()         { update(); return ownerCorrectionPtr_(); }
+    volScalarField& alpha()             { update(); return alphaPtr_(); }
+    boolList& isInterfaceCell()         { update(); return isInterfaceCellPtr_(); }
     
     static HashTable<ibmGeometryData>& geoDataTable(){ return geoData_; }
 };
