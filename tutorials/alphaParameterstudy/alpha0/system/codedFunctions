@@ -1,0 +1,138 @@
+codedFunctions
+{
+    libs        (utilityFunctionObjects);
+
+    #include "makeDict"
+
+    type                coded;
+    name                codedFunctions;
+    executeControl      timeStep;
+    
+    maxDi               0.01;
+    indicator           wallIndicator;
+    integral            uIntegral;
+    source              momentumSource;
+
+    codeData
+    #{
+        template<class Type> Type zero();
+
+        template<class Type> 
+        GeometricField<Type, fvPatchField, volMesh>& loadField(const word fieldName);
+
+        template<class Type> 
+        GeometricField<Type, fvPatchField, volMesh>& loadField(const word fieldName, const dimensionSet dim);
+
+        const dictionary& dict = mesh().time().controlDict().subDict("functions").subDict("codedFunctions");
+
+        label refInterval = 0;
+        label refCount = 0;
+
+        volScalarField& gradU = loadField<scalar>("gradU", dimVelocity/dimLength);
+    #};
+
+    localCode
+    #{
+        template<> scalar codedFunctionsFunctionObject::zero(){return 0;}
+        template<> vector codedFunctionsFunctionObject::zero(){return vector(0,0,0);}
+
+        template<class Type> 
+        GeometricField<Type, fvPatchField, volMesh>& codedFunctionsFunctionObject::loadField(const word fieldName)
+        {
+            typedef GeometricField<Type, fvPatchField, volMesh> fieldType;
+
+            if(!mesh().objectRegistry::foundObject<fieldType>(fieldName))
+            {
+                autoPtr<fieldType> fieldPtr;
+                fieldPtr.reset 
+                (
+                    new fieldType
+                    (
+                        IOobject
+                        (
+                            fieldName,
+                            mesh().time().timeName(),
+                            mesh(),
+                            IOobject::MUST_READ,
+                            IOobject::NO_WRITE
+                        ),
+                        mesh()
+                    )
+                );
+                fieldPtr->store(fieldPtr);
+            }
+            return mesh().lookupObjectRef<fieldType>(fieldName);
+        }
+
+        template<class Type> 
+        GeometricField<Type, fvPatchField, volMesh>& codedFunctionsFunctionObject::loadField(const word fieldName, const dimensionSet dim)
+        {
+            typedef GeometricField<Type, fvPatchField, volMesh> fieldType;
+
+            if(!mesh().objectRegistry::foundObject<fieldType>(fieldName))
+            {
+                autoPtr<fieldType> fieldPtr;
+                fieldPtr.reset 
+                (
+                    new fieldType
+                    (
+                        IOobject
+                        (
+                            fieldName,
+                            mesh().time().timeName(),
+                            mesh(),
+                            IOobject::READ_IF_PRESENT,
+                            IOobject::NO_WRITE
+                        ),
+                        mesh(),
+                        dimensioned<Type>(dim, zero<Type>())
+                    )
+                );
+                fieldPtr->store(fieldPtr);
+            }
+            return mesh().lookupObjectRef<fieldType>(fieldName);
+        }
+    #};
+
+    codeRead
+    #{
+        IOobject dynMeshIO("dynamicMeshDict", mesh().time().constant(), mesh(), IOobject::MUST_READ);
+        IOdictionary dynMeshDictIO(dynMeshIO);
+        dictionary dynMeshDict(dynMeshDictIO);
+
+        refInterval = dynMeshDict.get<label>("refineInterval");
+    #};
+
+    codeExecute
+    #{
+        const dynamicFvMesh& dynMesh = static_cast<dynamicFvMesh&>(const_cast<fvMesh&>(mesh()));
+        volVectorField& U = loadField<vector>("U");
+        
+        //const volScalarField& vof = loadField<scalar>("vofField");
+        //U *= vof;
+
+        if(dynMesh.changing()){ refCount = 0; }
+        if(refCount >= refInterval-1 && mesh().time().value() != 0)
+        { 
+            volScalarField& gradU = loadField<scalar>("gradU");
+            volVectorField& UMean = loadField<vector>("UMean");
+            
+            tmp<volScalarField> gradUPtr = mag(fvc::grad(UMean));
+            gradU = gradUPtr;
+
+            for(int i = 0; i <= 5; i++)
+            {
+                gradU = fvc::average(fvc::interpolate(gradU));
+            }
+        }
+        refCount ++;
+
+
+
+        if(mesh().time().outputTime())
+        {
+            loadField<scalar>("gradU").write();
+        }
+    #};
+}
+// ************************************************************************* //
