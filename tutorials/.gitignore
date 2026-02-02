@@ -17,3 +17,10 @@ nohup.out
 
 processor*
 !ibmAirfoil_multiCore*/[0-9]*
+!ibmAirfoil_*/[0-9]*
+!ibmAirfoil_*/log.*
+!ibmAirfoil_*/foam.foam
+!alphaParameterstudy/alpha*/[0-9]*
+!alphaParameterstudy/log.*
+!alphaParameterstudy/foam.foam
+ibmAirfoil_test

@@ -60,8 +60,8 @@ adjustTimeStep  no;
 
 functions
 {
-    #include "fieldAverage"
-    #include "codedFunctions"
+    //#include "fieldAverage"
+    //#include "codedFunctions"
 }
 
 

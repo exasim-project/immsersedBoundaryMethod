@@ -1,0 +1,183 @@
+/*---------------------------------------------------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2106                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+Build  : _c15bfde3cb-20210624 OPENFOAM=2106
+Arch   : "LSB;label=32;scalar=64"
+Exec   : decomposePar
+Date   : Dec 23 2025
+Time   : 11:49:00
+Host   : ISTM-corvus1
+PID    : 1875467
+I/O    : uncollated
+Case   : /home/ws/ms8248/OpenFOAM/ms8248-v2106/ibm_secondOrder/tutorials/ibmAirfoil_multiCore
+nProcs : 1
+trapFpe: Floating point exception trapping enabled (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 5, maxFileModificationPolls 20)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+--> FOAM Warning : 
+    From void* Foam::dlLibraryTable::openLibrary(const Foam::fileName&, bool)
+    in file db/dynamicLibrary/dlLibraryTable/dlLibraryTable.C at line 188
+    Could not load "soIBM"
+libsoIBM.so: cannot open shared object file: No such file or directory
+--> FOAM Warning : 
+    From void* Foam::dlLibraryTable::openLibrary(const Foam::fileName&, bool)
+    in file db/dynamicLibrary/dlLibraryTable/dlLibraryTable.C at line 188
+    Could not load "libVoF"
+libVoF.so: cannot open shared object file: No such file or directory
+
+
+Decomposing mesh
+
+Create mesh
+
+Calculating distribution of cells
+Decomposition method scotch [4] (region region0)
+
+Finished decomposition in 0.07 s
+
+Calculating original mesh data
+
+Distributing cells to processors
+
+Distributing faces to processors
+
+Distributing points to processors
+
+Constructing processor meshes
+--> FOAM Warning : 
+    From void* Foam::dlLibraryTable::openLibrary(const Foam::fileName&, bool)
+    in file db/dynamicLibrary/dlLibraryTable/dlLibraryTable.C at line 188
+    Could not load "soIBM"
+libsoIBM.so: cannot open shared object file: No such file or directory
+--> FOAM Warning : 
+    From void* Foam::dlLibraryTable::openLibrary(const Foam::fileName&, bool)
+    in file db/dynamicLibrary/dlLibraryTable/dlLibraryTable.C at line 188
+    Could not load "libVoF"
+libVoF.so: cannot open shared object file: No such file or directory
+
+Processor 0
+    Number of cells = 49934
+    Number of faces shared with processor 1 = 343
+    Number of faces shared with processor 2 = 268
+    Number of faces shared with processor 3 = 27
+    Number of processor patches = 3
+    Number of processor faces = 638
+    Number of boundary faces = 100272
+--> FOAM Warning : 
+    From void* Foam::dlLibraryTable::openLibrary(const Foam::fileName&, bool)
+    in file db/dynamicLibrary/dlLibraryTable/dlLibraryTable.C at line 188
+    Could not load "soIBM"
+libsoIBM.so: cannot open shared object file: No such file or directory
+--> FOAM Warning : 
+    From void* Foam::dlLibraryTable::openLibrary(const Foam::fileName&, bool)
+    in file db/dynamicLibrary/dlLibraryTable/dlLibraryTable.C at line 188
+    Could not load "libVoF"
+libVoF.so: cannot open shared object file: No such file or directory
+
+Processor 1
+    Number of cells = 50041
+    Number of faces shared with processor 0 = 343
+    Number of faces shared with processor 3 = 177
+    Number of processor patches = 2
+    Number of processor faces = 520
+    Number of boundary faces = 100568
+--> FOAM Warning : 
+    From void* Foam::dlLibraryTable::openLibrary(const Foam::fileName&, bool)
+    in file db/dynamicLibrary/dlLibraryTable/dlLibraryTable.C at line 188
+    Could not load "soIBM"
+libsoIBM.so: cannot open shared object file: No such file or directory
+--> FOAM Warning : 
+    From void* Foam::dlLibraryTable::openLibrary(const Foam::fileName&, bool)
+    in file db/dynamicLibrary/dlLibraryTable/dlLibraryTable.C at line 188
+    Could not load "libVoF"
+libVoF.so: cannot open shared object file: No such file or directory
+
+Processor 2
+    Number of cells = 49890
+    Number of faces shared with processor 0 = 268
+    Number of faces shared with processor 3 = 285
+    Number of processor patches = 2
+    Number of processor faces = 553
+    Number of boundary faces = 100207
+--> FOAM Warning : 
+    From void* Foam::dlLibraryTable::openLibrary(const Foam::fileName&, bool)
+    in file db/dynamicLibrary/dlLibraryTable/dlLibraryTable.C at line 188
+    Could not load "soIBM"
+libsoIBM.so: cannot open shared object file: No such file or directory
+--> FOAM Warning : 
+    From void* Foam::dlLibraryTable::openLibrary(const Foam::fileName&, bool)
+    in file db/dynamicLibrary/dlLibraryTable/dlLibraryTable.C at line 188
+    Could not load "libVoF"
+libVoF.so: cannot open shared object file: No such file or directory
+
+Processor 3
+    Number of cells = 50135
+    Number of faces shared with processor 0 = 27
+    Number of faces shared with processor 1 = 177
+    Number of faces shared with processor 2 = 285
+    Number of processor patches = 3
+    Number of processor faces = 489
+    Number of boundary faces = 100753
+
+Number of processor faces = 1100
+Max number of cells = 50135 (0.27% above average 50000)
+Max number of processor patches = 3 (20% above average 2.5)
+Max number of faces between processors = 638 (16% above average 550)
+
+Time = 0
+
+Processor 0: field transfer
+--> FOAM Warning : 
+    From void* Foam::dlLibraryTable::openLibrary(const Foam::fileName&, bool)
+    in file db/dynamicLibrary/dlLibraryTable/dlLibraryTable.C at line 188
+    Could not load "soIBM"
+libsoIBM.so: cannot open shared object file: No such file or directory
+--> FOAM Warning : 
+    From void* Foam::dlLibraryTable::openLibrary(const Foam::fileName&, bool)
+    in file db/dynamicLibrary/dlLibraryTable/dlLibraryTable.C at line 188
+    Could not load "libVoF"
+libVoF.so: cannot open shared object file: No such file or directory
+Processor 1: field transfer
+--> FOAM Warning : 
+    From void* Foam::dlLibraryTable::openLibrary(const Foam::fileName&, bool)
+    in file db/dynamicLibrary/dlLibraryTable/dlLibraryTable.C at line 188
+    Could not load "soIBM"
+libsoIBM.so: cannot open shared object file: No such file or directory
+--> FOAM Warning : 
+    From void* Foam::dlLibraryTable::openLibrary(const Foam::fileName&, bool)
+    in file db/dynamicLibrary/dlLibraryTable/dlLibraryTable.C at line 188
+    Could not load "libVoF"
+libVoF.so: cannot open shared object file: No such file or directory
+Processor 2: field transfer
+--> FOAM Warning : 
+    From void* Foam::dlLibraryTable::openLibrary(const Foam::fileName&, bool)
+    in file db/dynamicLibrary/dlLibraryTable/dlLibraryTable.C at line 188
+    Could not load "soIBM"
+libsoIBM.so: cannot open shared object file: No such file or directory
+--> FOAM Warning : 
+    From void* Foam::dlLibraryTable::openLibrary(const Foam::fileName&, bool)
+    in file db/dynamicLibrary/dlLibraryTable/dlLibraryTable.C at line 188
+    Could not load "libVoF"
+libVoF.so: cannot open shared object file: No such file or directory
+Processor 3: field transfer
+--> FOAM Warning : 
+    From void* Foam::dlLibraryTable::openLibrary(const Foam::fileName&, bool)
+    in file db/dynamicLibrary/dlLibraryTable/dlLibraryTable.C at line 188
+    Could not load "soIBM"
+libsoIBM.so: cannot open shared object file: No such file or directory
+--> FOAM Warning : 
+    From void* Foam::dlLibraryTable::openLibrary(const Foam::fileName&, bool)
+    in file db/dynamicLibrary/dlLibraryTable/dlLibraryTable.C at line 188
+    Could not load "libVoF"
+libVoF.so: cannot open shared object file: No such file or directory
+
+End
+
