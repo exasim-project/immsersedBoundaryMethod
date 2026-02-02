@@ -51,7 +51,8 @@ interpolationSchemes
 
 snGradSchemes
 {
-    default         corrected;
+    default             corrected;
+    snGrad(vofField)    orthogonal;
 }
 
 

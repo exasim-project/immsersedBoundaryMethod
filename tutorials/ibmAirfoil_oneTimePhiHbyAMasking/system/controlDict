@@ -28,7 +28,7 @@ geometry        naca0006;
 
 startFrom       startTime; //latestTime;
 
-startTime       2000;
+startTime       0;
 
 stopAt          endTime;
 
@@ -60,7 +60,7 @@ adjustTimeStep  no;
 
 functions
 {
-    #include "fieldAverage"
+    //#include "fieldAverage"
     //#include "codedFunctions"
 }
 

@@ -10,7 +10,7 @@ Created on Mon Nov 17 13:32:21 2025
 import numpy as np
 
 #case settings
-DATA_DIR = 'postProcessing/controlVolumeSampling/2926/'
+DATA_DIR = 'postProcessing/controlVolumeSampling/2938/'
 rho = 1
 lines = ['frontLine', 'backLine', 'upperLine', 'lowerLine']
 fields = ["p", "U", "grad(U)"]
