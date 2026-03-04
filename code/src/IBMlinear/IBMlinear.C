@@ -40,15 +40,7 @@ namespace Foam
 
 template<class Type>
 template<class SFType>
-Foam::tmp
-<
-    Foam::GeometricField
-    <
-        typename Foam::innerProduct<typename SFType::value_type, Type>::type,
-        Foam::fvsPatchField,
-        Foam::surfaceMesh
-    >
->
+Foam::tmp<Foam::GeometricField<typename Foam::innerProduct<typename SFType::value_type, Type>::type,Foam::fvsPatchField,Foam::surfaceMesh>>
 Foam::IBMlinear<Type>::dotInterpolate
 (
     const SFType& Sf,
@@ -107,9 +99,9 @@ Foam::IBMlinear<Type>::dotInterpolate
         ibmGeometryData::geoDataTable().insert(geoDataName, ibmGeometryData(dynMesh));
     }
     Foam::ibmGeometryData& geoData = ibmGeometryData::geoDataTable()[geoDataName];
-    surfaceScalarField& deltaQuotient = geoData.deltaQuotient();
+    //surfaceScalarField& deltaQuotient = geoData.deltaQuotient();
     volScalarField& vofField = geoData.vofField();
-    //surfaceScalarField& vofGrad = geoData.vofGrad();
+    //surfaceScalarField& vofGrad = geoData.vofGrad();*/
     
     for (label fi=0; fi<P.size(); fi++)
     {
@@ -118,12 +110,12 @@ Foam::IBMlinear<Type>::dotInterpolate
 
         // Flussinterpolation, wenn Interface zwischen Solid und face:
         //Variante ohne if-Anweisungen:
-        vN  -=  (vN + vP * lambda[fi]/(1 - lambda[fi])) * vofField[P[fi]] * (1 - vofField[N[fi]]) * pos(deltaQuotient[fi] - 1/lambda[fi])
+        /*vN  -=  (vN + vP * lambda[fi]/(1 - lambda[fi])) * vofField[P[fi]] * (1 - vofField[N[fi]]) * pos(deltaQuotient[fi] - 1/lambda[fi])
             +   (vN - vP*(1-deltaQuotient[fi])) * vofField[P[fi]] * (1 - vofField[N[fi]]) * neg0(deltaQuotient[fi] - 1/lambda[fi]);
         vP  -=  (vP - (vN - vN/lambda[fi])) * vofField[N[fi]] * (1 - vofField[P[fi]]) * pos(deltaQuotient[fi] - 1/(1-lambda[fi]))
             +   (vP - (vN*(1-lambda[fi])*(1-lambda[fi])/(lambda[fi]*lambda[fi])*(1-deltaQuotient[fi]))) * vofField[P[fi]] * (1 - vofField[N[fi]]) * neg0(deltaQuotient[fi] - 1/(1-lambda[fi]));
             
-        sfi[fi] = Sfi[fi] & (lambda[fi]*(vP - vN) + vN);
+        sfi[fi] = Sfi[fi] & (lambda[fi]*(vP - vN) + vN);*/
         //  #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   //
         
         // Variante mit if-Anweisungen:
@@ -149,15 +141,15 @@ Foam::IBMlinear<Type>::dotInterpolate
                     //Info << "Nachher: " << vP << " " << vN << endl;
                 }
             }
-        }
+        }*/
         //  #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   //
 
-        sfi[fi] = Sfi[fi] & (lambda[fi]*(vP - vN) + vN);*/
+        sfi[fi] = Sfi[fi] & (lambda[fi]*(vP - vN) + vN);
 
         // Fluss in IBM und auf IBM face zu 0 setzen:
-        /*if( vofField[P[fi]] == 0 || vofField[N[fi]] == 0){
+        if( vofField[P[fi]] == 0 || vofField[N[fi]] == 0){
             sfi[fi] *= 0;
-        }*/
+        }
         //  #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   #   //
     }
 
@@ -195,15 +187,18 @@ Foam::IBMlinear<Type>::dotInterpolate
 }
 
 template<class Type>
-Foam::tmp
-<
-    Foam::GeometricField
-    <
-        typename Foam::innerProduct<Foam::vector, Type>::type,
-        Foam::fvsPatchField,
-        Foam::surfaceMesh
-    >
->
+Foam::tmp<Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>>
+Foam::IBMlinear<Type>::interpolate
+(
+    const GeometricField<Type, fvPatchField, volMesh>& vf,
+    const tmp<surfaceScalarField>& tlambdas
+)
+{
+    return dotInterpolate(geometricOneField(), vf, tlambdas);
+}
+
+template<class Type>
+Foam::tmp<Foam::GeometricField<typename Foam::innerProduct<Foam::vector, Type>::type,Foam::fvsPatchField,Foam::surfaceMesh>>
 Foam::IBMlinear<Type>::dotInterpolate
 (
     const surfaceVectorField& Sf,
@@ -242,33 +237,66 @@ Foam::IBMlinear<Type>::dotInterpolate
 }
 
 template<class Type>
-Foam::tmp
-<
-    Foam::GeometricField
-    <
-        typename Foam::innerProduct<Foam::vector, Type>::type,
-        Foam::fvsPatchField,
-        Foam::surfaceMesh
-    >
->
+Foam::tmp<Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>>
+Foam::IBMlinear<Type>::interpolate
+(
+    const GeometricField<Type, fvPatchField, volMesh>& vf
+) const
+{
+    if (surfaceInterpolation::debug)
+    {
+        InfoInFunction
+            << "Interpolating "
+            << vf.type() << " "
+            << vf.name()
+            << " from cells to faces"
+            << endl;
+    }
+
+    tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> tsf
+        = interpolate(vf, weights(vf));
+
+    /*if (corrected())
+    {
+        tsf.ref() += correction(vf);
+    }*/
+
+    return tsf;
+}
+
+template<class Type>
+Foam::tmp<Foam::GeometricField<typename Foam::innerProduct<Foam::vector, Type>::type,Foam::fvsPatchField,Foam::surfaceMesh>>
 Foam::IBMlinear<Type>::dotInterpolate
 (
-    const surfaceVectorField& Sf,
+const surfaceVectorField& Sf,
+const tmp<GeometricField<Type, fvPatchField, volMesh>>& tvf
+) const
+{
+tmp
+<
+    GeometricField
+    <
+        typename Foam::innerProduct<Foam::vector, Type>::type,
+        fvsPatchField,
+        surfaceMesh
+    >
+> tSfDotinterpVf = dotInterpolate(Sf, tvf());
+
+tvf.clear();
+return tSfDotinterpVf;
+}
+
+template<class Type>
+Foam::tmp<Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>>
+Foam::IBMlinear<Type>::interpolate
+(
     const tmp<GeometricField<Type, fvPatchField, volMesh>>& tvf
 ) const
 {
-    tmp
-    <
-        GeometricField
-        <
-            typename Foam::innerProduct<Foam::vector, Type>::type,
-            fvsPatchField,
-            surfaceMesh
-        >
-    > tSfDotinterpVf = dotInterpolate(Sf, tvf());
-
+    tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> tinterpVf
+        = interpolate(tvf());
     tvf.clear();
-    return tSfDotinterpVf;
+    return tinterpVf;
 }
 
 // ************************************************************************* //

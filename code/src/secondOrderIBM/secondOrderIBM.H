@@ -120,7 +120,8 @@ class secondOrderIBM
         const scalar penalty_;
         const word geometryName_;
 
-        tmp<laplacianScheme<vector, scalar>> ibmScheme();
+        tmp<laplacianScheme<scalar, scalar>> ibmSchemeScalar();
+        tmp<laplacianScheme<vector, scalar>> ibmSchemeVector();
         tmp<volScalarField> nu();
 
 public:
@@ -156,6 +157,12 @@ public:
         //- Add explicit contribution to momentum equation
         virtual void addSup
         (
+            fvMatrix<scalar>& eqn,
+            const label fieldi
+        );
+
+        virtual void addSup
+        (
             fvMatrix<vector>& eqn,
             const label fieldi
         );
@@ -164,10 +171,17 @@ public:
         virtual void addSup
         (
             const volScalarField& rho,
-            fvMatrix<vector>& eqn,
+            fvMatrix<scalar>& eqn,
             const label fieldi
         );
 
+        virtual void addSup
+        (
+            const volScalarField& rho,
+            fvMatrix<vector>& eqn,
+            const label fieldi
+        );
+        
         virtual void constrain
         (
             fvMatrix<vector>& eqn,

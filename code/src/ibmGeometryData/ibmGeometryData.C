@@ -281,7 +281,6 @@ void Foam::ibmGeometryData::computeDeltaQuotient
             isInterfacecell[celli] = 0;
         }
     }
-    isInterfacecell.write();
 
     volScalarField delQuoKlEins
     (

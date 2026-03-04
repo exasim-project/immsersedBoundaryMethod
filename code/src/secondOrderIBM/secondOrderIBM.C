@@ -44,7 +44,58 @@ namespace fv
 }
 }
 
-Foam::tmp<Foam::fv::laplacianScheme<Foam::vector, Foam::scalar>> Foam::fv::secondOrderIBM::ibmScheme()
+Foam::tmp<Foam::fv::laplacianScheme<Foam::scalar, Foam::scalar>> Foam::fv::secondOrderIBM::ibmSchemeScalar()
+{
+    // Read interpolation scheme from fvSchemes dictionary
+    const dictionary& surfInterpDict =
+        mesh().schemesDict().subDict("interpolationSchemes");
+
+    const word key("IBM");
+
+    // Look up entry for IBM, fall back to "default"
+    ITstream& interpData =
+        surfInterpDict.found(key)
+        ? surfInterpDict.lookup(key)
+        : surfInterpDict.lookup("default");
+
+    // Construct interpolation scheme for scalars
+    tmp<surfaceInterpolationScheme<scalar>> tinterp =
+        surfaceInterpolationScheme<scalar>::New(mesh(), interpData);
+    
+
+    // Read snGrad scheme from fvSchemes dictionary
+    const dictionary& snGradDict = mesh().schemesDict().subDict("snGradSchemes");
+
+    // Look up scheme name for IBM, fall back to "default"
+    ITstream& schemeData =
+        snGradDict.found(key)
+        ? snGradDict.lookup(key)
+        : snGradDict.lookup("default");
+
+    // Construct snGrad scheme from dictionary (runtime selection)
+    tmp<snGradScheme<Foam::scalar>> tsngrad =
+        snGradScheme<Foam::scalar>::New(mesh(), schemeData);
+
+    
+    // Construct Laplacian scheme with both
+    tmp<fv::laplacianScheme<scalar, scalar>> scheme
+    (
+        new fv::ibmGaussLaplacianScheme<scalar, scalar>
+        (
+            mesh(),
+            tinterp,
+            tsngrad
+        )
+    );
+
+    static_cast<fv::ibmGaussLaplacianScheme<scalar, scalar>&>
+    (
+        scheme.ref()).setGeometry(dict_.get<word>("geometry")
+    );
+    return scheme;
+}
+
+Foam::tmp<Foam::fv::laplacianScheme<Foam::vector, Foam::scalar>> Foam::fv::secondOrderIBM::ibmSchemeVector()
 {
     // Read interpolation scheme from fvSchemes dictionary
     const dictionary& surfInterpDict =
@@ -146,13 +197,31 @@ Foam::fv::secondOrderIBM::secondOrderIBM
 
 void Foam::fv::secondOrderIBM::addSup
 (
+    fvMatrix<scalar>& eqn,
+    const label fieldi
+)
+{
+    eqn += ibmSchemeScalar()->fvmLaplacian(nu(), eqn.psi());
+}
+
+void Foam::fv::secondOrderIBM::addSup
+(
     fvMatrix<vector>& eqn,
     const label fieldi
 )
 {
-    eqn += ibmScheme()->fvmLaplacian(nu(), eqn.psi());
+    eqn += ibmSchemeVector()->fvmLaplacian(nu(), eqn.psi());
 }
 
+void Foam::fv::secondOrderIBM::addSup
+(
+    const volScalarField& rho,
+    fvMatrix<scalar>& eqn,
+    const label fieldi
+)
+{
+    eqn += rho*ibmSchemeScalar()->fvmLaplacian(nu(), eqn.psi());
+}
 
 void Foam::fv::secondOrderIBM::addSup
 (
@@ -161,7 +230,7 @@ void Foam::fv::secondOrderIBM::addSup
     const label fieldi
 )
 {
-    eqn += rho*ibmScheme()->fvmLaplacian(nu(), eqn.psi());
+    eqn += rho*ibmSchemeVector()->fvmLaplacian(nu(), eqn.psi());
 }
 
 void Foam::fv::secondOrderIBM::constrain
@@ -177,7 +246,7 @@ void Foam::fv::secondOrderIBM::constrain
     }
 
     volScalarField& fluid = ibmGeometryData::geoDataTable()[geometryName_].vofField();
-    eqn.diag() += max(eqn.diag())*(1-fluid)*penalty_;   // Faktor muss erhöht werden (Hier: 100)
+    eqn.diag() += max(eqn.diag())*(1-fluid)*penalty_;
 }
 
 void Foam::fv::secondOrderIBM::correct

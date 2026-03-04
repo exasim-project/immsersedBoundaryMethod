@@ -111,68 +111,59 @@ public:
         //- Return the face-interpolate of the given cell field
         //  with the given weighting factors dotted with given field Sf
         template<class SFType>
-        static tmp
-        <
-            GeometricField
-            <
-                typename innerProduct<typename SFType::value_type, Type>::type,
-                fvsPatchField,
-                surfaceMesh
-            >
-        >
+        static tmp< GeometricField<typename innerProduct<typename SFType::value_type, Type>::type,fvsPatchField,surfaceMesh>>
         dotInterpolate
         (
             const SFType& Sf,
             const GeometricField<Type, fvPatchField, volMesh>& vf,
             const tmp<surfaceScalarField>& tlambdas
         );
+        //- Return the face-interpolate of the given cell field
+        //  with the given weighting factors
+        static tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
+        interpolate
+        (
+            const GeometricField<Type, fvPatchField, volMesh>&,
+            const tmp<surfaceScalarField>&
+        );
 
         //- Return the face-interpolate of the given cell field
         //  with explicit correction dotted with given field Sf
         virtual
-        tmp
-        <
-            GeometricField
-            <
-                typename innerProduct<vector, Type>::type,
-                fvsPatchField,
-                surfaceMesh
-            >
-        >
+        tmp<GeometricField<typename innerProduct<vector, Type>::type,fvsPatchField,surfaceMesh>>
         dotInterpolate
         (
             const surfaceVectorField& Sf,
             const GeometricField<Type, fvPatchField, volMesh>& vf
         ) const;
+        //- Return the face-interpolate of the given cell field
+        //  with explicit correction
+        virtual
+        tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
+        interpolate
+        (
+            const GeometricField<Type,fvPatchField, volMesh>&
+        ) const;
 
         //- Return the face-interpolate of the given tmp cell field
         //  with explicit correction dotted with given field Sf
-        tmp
-        <
-            GeometricField
-            <
-                typename innerProduct<vector, Type>::type,
-                fvsPatchField,
-                surfaceMesh
-            >
-        >
+        tmp<GeometricField<typename innerProduct<vector, Type>::type,fvsPatchField,surfaceMesh>>
         dotInterpolate
         (
             const surfaceVectorField& Sf,
             const tmp<GeometricField<Type, fvPatchField, volMesh>>&
         ) const;
+        //- Return the face-interpolate of the given tmp cell field
+        //  with explicit correction
+        tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
+        interpolate
+        (
+            const tmp<GeometricField<Type, fvPatchField, volMesh>>&
+        ) const;
 };
 
 template<>
-tmp
-<
-    GeometricField
-    <
-        typename innerProduct<vector, scalar>::type,
-        fvsPatchField,
-        surfaceMesh
-    >
->
+tmp<GeometricField<typename innerProduct<vector, scalar>::type,fvsPatchField,surfaceMesh>>
 IBMlinear<scalar>::dotInterpolate
 (
     const surfaceVectorField& Sf,
