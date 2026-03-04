@@ -1,0 +1,102 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2306                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    p
+    {
+        solver          GAMG;
+        tolerance       1e-8;
+        relTol          0;
+        smoother        GaussSeidel;
+    }
+
+    pFinal
+    {
+        $p;
+        tolerance       1e-12;
+    }
+
+    "(U)"
+    {
+        solver          smoothSolverIBM;
+        tolerance       1e-8;
+        relTol          0;
+        smoother        GaussSeidel;
+        geometry        naca0006;
+    }
+    
+    "(U)Final"
+    {
+        $U;
+        tolerance       1e-12;
+    }
+
+    alpha.ibm
+    {
+        nAlphaCorr      1;
+        nAlphaSubCycles 1;
+        cAlpha          2; //compression coefficient
+
+        advectionScheme isoAdvection;
+        reconstructionScheme plicRDF;
+    }
+
+    "alpha.naca0006.*"
+    {
+        nAlphaCorr      2;
+        nAlphaSubCycles 1;
+        cAlpha          3;
+
+        advectionScheme         isoAdvection;
+        reconstructionScheme    plicRDF;
+
+        MULESCorr       yes;
+        nLimiterIter    3;
+
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        tolerance       1e-8;
+        relTol          0;
+        minIter         3;
+    }
+}
+
+SIMPLE
+{
+    nNonOrthogonalCorrectors    0;
+    consistent			yes;		//SIMPLEC-Algorithmus insbesondere im stat. sonst divergent
+
+    residualControl
+    {
+        U   1e-07;
+        p   1e-07;
+    }   
+}
+
+relaxationFactors
+{
+    fields
+    {
+        p               0.3;
+    }
+    equations
+    {
+        "(U)"           0.9;
+    }
+}
+
+// ************************************************************************* //
