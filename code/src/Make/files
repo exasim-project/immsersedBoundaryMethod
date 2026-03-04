@@ -1,4 +1,5 @@
 ibmGaussLaplacianScheme/ibmGaussLaplacianSchemeRunTime.C
+staircaseIBMGaussLaplacianScheme/staircaseIBMGaussLaplacianSchemeRunTime.C
 ibmGeometryData/ibmGeometryData.C
 GAMGIBM/GAMGIBMSolver.C
 GAMGIBM/GAMGIBMSolverScale.C
@@ -8,6 +9,8 @@ GAMGIBM/GAMGIBMSolverSolve.C
 smoothSolverIBM/smoothSolverIBM.C
 
 secondOrderIBM/secondOrderIBM.C
+staircaseIBM/staircaseIBM.C
 IBMlinear/IBMlinear.C
+IBMlinearP/IBMlinearP.C
 
 LIB = $(FOAM_USER_LIBBIN)/libsoIBM
