@@ -16,6 +16,8 @@ runApplication decomposePar
 #runApplication $FOAM_USER_APPBIN/multiMultiFoam
 #runApplication simpleFoam
 
+runApplication reconstructPar
+
 #postProcess -func sample -latestTime
 
 #python3 scripts/postProcessing.py

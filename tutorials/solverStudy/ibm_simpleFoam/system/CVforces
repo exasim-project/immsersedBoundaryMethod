@@ -40,10 +40,11 @@ CVforces
         Info<< "Executing CV force integration..." << endl;
         
         // === USER PARAMETERS ===
-        scalar xmin = -10;
-        scalar xmax = 10;
-        scalar ymin = -10;
-        scalar ymax = 10;
+        scalar xmin = -1;
+        scalar xmax = 2;
+        scalar ymin = -0.5;
+        scalar ymax = 0.5;
+        scalar z_leght = 1;
 
         const volScalarField& p = mesh().lookupObjectRef<volScalarField>("p");
         const volVectorField& U = mesh().lookupObjectRef<volVectorField>("U");
@@ -64,6 +65,10 @@ CVforces
         
         // === 1. Zellen im CV sammeln ===
         boolList inRegion(mesh().nCells(), false);
+        scalar numberOfCellsInRegion = 0;
+        scalar volumeOfCellsInRegion = 0;
+        scalar meanCellVolume;
+        scalar meanCellLenght;
         forAll(mesh().C(), cellI) 
         { 
             const point& C = mesh().C()[cellI];
@@ -71,8 +76,12 @@ CVforces
                 C.y() > ymin && C.y() < ymax)
             { 
                 inRegion[cellI] = true;
+                numberOfCellsInRegion += 1;
+                volumeOfCellsInRegion += mesh().V()[cellI];
             } 
         }
+        meanCellVolume = volumeOfCellsInRegion/numberOfCellsInRegion;
+        meanCellLenght = sqrt(meanCellVolume/z_leght);
 
         // === 2. Boundary Faces des CV bestimmen ===
         labelHashSet faces;
@@ -134,9 +143,9 @@ CVforces
         const vector cV_y_(-sin(degToRad($gV_alpha_DEG)), cos(degToRad($gV_alpha_DEG)), 0);
 
         vector F_m = -m * $gV_U_inf * cV_x_;
-        scalar F_L_m = (F + F_m) & cV_y_;
+        //scalar F_L_m = (F + F_m) & cV_y_;
         scalar F_D_m = (F + F_m) & cV_x_;
-        scalar c_L_m = F_L_m/(0.5 * rho * $gV_U_inf * Area);
+        //scalar c_L_m = F_L_m/(0.5 * rho * $gV_U_inf * Area);
         scalar c_D_m = F_D_m/(0.5 * rho * $gV_U_inf * Area);
 
         scalar F_L = F & cV_y_;
@@ -152,7 +161,8 @@ CVforces
             (
                 "CVforces",
                 mesh().time().timeName(),
-                mesh(), IOobject::NO_READ,
+                mesh(),
+                IOobject::NO_READ,
                 IOobject::AUTO_WRITE
             )
         );
@@ -161,10 +171,11 @@ CVforces
         resultDict.add("viscousForce", Fv);
         resultDict.add("convectiveForce", Fc);
         resultDict.add("totalForce", F);
+        resultDict.add("meanCellVolume", meanCellVolume);
+        resultDict.add("meanCellLenght", meanCellLenght);
         resultDict.add("c_L", c_L);
         resultDict.add("c_D", c_D);
         resultDict.add("m_error", m);
-        resultDict.add("c_L_m", c_L_m);
         resultDict.add("c_D_m", c_D_m);
 
         resultDict.regIOobject::write();
