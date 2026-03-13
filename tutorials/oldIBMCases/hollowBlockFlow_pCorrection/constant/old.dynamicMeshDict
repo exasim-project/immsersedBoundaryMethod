@@ -1,0 +1,130 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v1812                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      dynamicMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+//dynamicFvMesh   dynamicMultiDimRefineBalancedFvMesh; 
+dynamicFvMesh dynamicMultiDimRefineFvMesh;
+//dynamicFvMesh   staticFvMesh;
+
+enableBalancing true;
+allowableImbalance 0.10;
+
+adaptCriteria
+{
+    type composedAdaptCriteria;
+    operation or;
+    criteria
+    (
+        wall
+        {
+            type                fieldBounds;
+            fieldName           reconstructedDistanceFunction;
+            lowerBound          1e-05;
+            upperBound          1e05;
+            maxCellLevel        5;
+            nLayer              4;              
+        }
+        
+        gradUVeryCoarse
+        {
+            type                fieldBounds;
+            fieldName           gradU;
+            lowerBound          1e-02;
+            upperBound          1e05;
+            maxCellLevel        1;
+            nLayer              12;              
+        }
+        
+        gradUCoarse
+        {
+            type                fieldBounds;
+            fieldName           gradU;
+            lowerBound          4e-03;
+            upperBound          1e05;
+            maxCellLevel        2;
+            nLayer              6;              
+        }
+        
+        gradU
+        {
+            type                fieldBounds;
+            fieldName           gradU;
+            lowerBound          1e-01;
+            upperBound          1e05;
+            maxCellLevel        3;
+            nLayer              6;              
+        }
+        
+        gradUFine
+        {
+            type                fieldBounds;
+            fieldName           gradU;
+            lowerBound          4e-01;
+            upperBound          1e05;
+            maxCellLevel        4;
+            nLayer              6;              
+        }
+        
+        STL
+        {
+            type                geometric;  
+            surftype            triSurfaceMesh;      
+            file                cylinder.stl;  
+            maxCellLevel        3;
+        }
+    );
+}
+// How often to refine
+refineInterval  20;
+
+// Have slower than 2:1 refinement
+nBufferLayers   4;
+
+// Refine cells only up to maxRefinement levels
+maxRefinement   10;
+
+// Stop refinement if maxCells reached
+maxCells        15000000;
+
+// Flux field and corresponding velocity field. Fluxes on changed
+// faces get recalculated by interpolating the velocity. Use 'none'
+// on surfaceScalarFields that do not need to be reinterpolated.
+correctFluxes
+(
+    (phi none)
+    (nHatf none)
+    (rhoPhi none)
+    (ghf none)
+    (phi0 none)
+    (dVf_ none)
+    (phiU none)
+    (phiUa none)
+    (uniPhi none)
+    (alphaPhi_ none)
+    (deltaFunction_ none)
+    (nHatf_ none)
+    (Kf_ none)
+
+);
+
+// Write the refinement level as a volScalarField
+dumpLevel       true;
+
+
+
+
+
+// ************************************************************************* //

@@ -1,0 +1,17 @@
+#!/bin/sh
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+#------------------------------------------------------------------------------
+
+touch foam.foam
+
+cp -r 0.orig 0/
+
+runApplication blockMesh
+
+#runApplication $FOAM_USER_APPBIN/multiMultiFoam
+runApplication IBMSimpleFoam
+
+#postProcess -func sample -latestTime
+
+#python3 scripts/postProcessing.py

@@ -1,0 +1,13 @@
+// builds
+linux64Gcc*
+lnInclude
+
+// vs code config
+.vscode
+
+// python stuff
+__pycache__
+.venv
+
+code/bin
+code/lib

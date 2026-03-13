@@ -1,0 +1,24 @@
+#!/bin/bash
+cd ${0%/*} || exit 1
+
+SOURCE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+source Allwmake.pre
+
+
+if [ "$SOURCE_DIR" == "$GIT_ROOT_DIR" ]; then
+    echo "Compiling twoPhaseFlow..."
+    $SOURCE_DIR/code/twoPhaseFlow/Allwmake
+fi
+
+
+echo "Compiling soIBM..."
+wmake -j8 $SOURCE_DIR/code/src
+
+
+if [ "$SOURCE_DIR" == "$GIT_ROOT_DIR" ]; then
+    echo "Compiling IBMFoam Solvers..."
+    wmake -j8 $SOURCE_DIR/code/app/IBMSimpleFoam
+    wmake -j8 $SOURCE_DIR/code/app/correctpEqnIBMSimpleFoam
+    wmake -j8 $SOURCE_DIR/code/app/IBMPimpleFoam
+fi

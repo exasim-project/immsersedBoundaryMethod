@@ -1,0 +1,26 @@
+#!/bin/bash
+cd ${0%/*} || exit 1
+
+SOURCE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+#check if GIT_ROOT_DIR was not already set
+if [ -z "$GIT_ROOT_DIR" ]; then
+    echo "The local bashrc is not properly sourced. Run 'source bashrc'"
+    exit 0;
+fi
+
+#check if $FOAM_USER_LIBBIN was not overwritten eg by sourcing OpenFOAM again
+if ! echo "$LD_LIBRARY_PATH" | tr ':' '\n' | grep -q "$GIT_ROOT_DIR"; then
+    echo
+    echo $GIT_ROOT_DIR " is not in LD_LIBRARY_PATH. Have you sourced OpenFOAM again after sourcing the bashrc?"
+    echo "Use 'unsetVariables; source bashrc' or open a new terminal."
+fi
+
+if [ "$SOURCE_DIR" == "$GIT_ROOT_DIR" ]; then
+    echo "Cleaning twoPhaseFlow..."
+    $SOURCE_DIR/code/twoPhaseFlow/Allwclean
+fi
+
+echo "Cleaning soIBM..."
+wclean code/src
+

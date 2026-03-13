@@ -1,0 +1,20 @@
+#!/bin/sh
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+#------------------------------------------------------------------------------
+
+touch foam.foam
+
+cp -r 0.orig 0/
+
+runApplication blockMesh
+
+runApplication checkMesh
+
+runApplication decomposePar
+
+runApplication mpirun -np 8 simpleFoam -parallel
+
+runApplication reconstructPar -latestTime
+
+runApplication postProcess -func CVforces -latestTime

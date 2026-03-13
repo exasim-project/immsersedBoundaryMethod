@@ -1,0 +1,13 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # Run from this directory
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+rm -r 0
+rm log.*
+rm -r dynamicCode
+rm -r constant/polyMesh
+
+foamListTimes -rm
+rm foam.foam

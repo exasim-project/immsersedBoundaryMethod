@@ -1,0 +1,21 @@
+// builds
+linux64Gcc*
+lnInclude
+
+// vs code config
+.vscode
+
+// python stuff
+__pycache__
+
+// logs
+log.*
+
+// possible solutions in test cases
+[1-9]*
+dynamicCode
+constant/polyMesh
+constant/cellToRegion
+*.foam
+images
+postProcessing

@@ -1,0 +1,175 @@
+CVforces
+{
+    #include "globalVariables";
+
+    libs                (utilityFunctionObjects);
+
+    type                coded;
+    name                CVforces;
+    writeControl        onEnd;
+
+    fields              
+    (
+        U
+        p
+        phi
+    );
+
+    codeInclude
+    #{
+        #include "fvCFD.H"
+    #};
+
+    codeOptions
+    #{
+        -I$(LIB_SRC)/finiteVolume/lnInclude
+    #};
+
+    codeLibs
+    #{
+
+    #};
+
+    codeRead
+    #{
+        Info<< "CVforces: compiled and ready." << endl;
+    #};
+
+    codeExecute
+    #{
+        Info<< "Executing CV force integration..." << endl;
+        
+        // === USER PARAMETERS ===
+        scalar xmin = -1;
+        scalar xmax = 2;
+        scalar ymin = -0.5;
+        scalar ymax = 0.5;
+
+        const volScalarField& p = mesh().lookupObjectRef<volScalarField>("p");
+        const volVectorField& U = mesh().lookupObjectRef<volVectorField>("U");
+        const surfaceScalarField& phi = mesh().lookupObjectRef<surfaceScalarField>("phi");
+        tmp<volTensorField> tgradU = fvc::grad(U);
+        const volTensorField& gradU = tgradU();
+
+        surfaceScalarField pFace = fvc::interpolate(p);
+        surfaceVectorField UFace = fvc::interpolate(U);
+        surfaceTensorField gradUFace = fvc::interpolate(gradU);
+
+        const labelList& owner = mesh().owner();
+        const labelList& neighbour = mesh().neighbour();
+        
+        scalar rho = 1.0;
+        scalar nu = $gV_nu_air;
+        scalar mu = rho * nu;
+        
+        // === 1. Zellen im CV sammeln ===
+        boolList inRegion(mesh().nCells(), false);
+        forAll(mesh().C(), cellI) 
+        { 
+            const point& C = mesh().C()[cellI];
+            if (C.x() > xmin && C.x() < xmax &&
+                C.y() > ymin && C.y() < ymax)
+            { 
+                inRegion[cellI] = true;
+            } 
+        }
+
+        // === 2. Boundary Faces des CV bestimmen ===
+        labelHashSet faces;
+        forAll(mesh().cells(), cellI)
+        {
+            if (!inRegion[cellI]) continue;
+            
+            const cell& c = mesh().cells()[cellI];
+            
+            forAll(c, f)
+            { 
+                label faceI = c[f];
+                if (mesh().isInternalFace(faceI))
+                {
+                    label nei = neighbour[faceI];
+                    label own = owner[faceI];
+                    if (!inRegion[own] || !inRegion[nei])
+                    {
+                        faces.insert(faceI);
+                    }
+                }
+            }
+        }
+        
+        // === 3. Kräfte integrieren ===
+        vector Fp = vector::zero;
+        vector Fv = vector::zero;
+        vector Fc = vector::zero;
+        scalar m = 0;
+        
+        forAllConstIter(labelHashSet, faces, iter)
+        {
+            label faceI = iter.key();
+
+            scalar p_f = pFace[faceI];
+            vector U_f = UFace[faceI];
+            scalar phi_f = phi[faceI];
+            tensor gU = gradUFace[faceI];
+
+            vector Sf = mesh().Sf()[faceI];
+
+            if (!inRegion[owner[faceI]])
+            {
+                Sf *= -1;
+                phi_f *= -1;
+            }
+            
+            m -= rho * phi_f;
+            Fp += -p_f * Sf;
+            Fv += mu * (gU + gU.T()) & Sf;
+            Fc += rho * phi_f * U_f;
+        }
+        
+        vector F = -(Fc - (Fp + Fv)); // In Koordinatenachsenrichtung, weil mesh ist orthogonal
+        
+        scalar Area = 1;
+
+        const vector cV_x_(cos(degToRad($gV_alpha_DEG)), sin(degToRad($gV_alpha_DEG)), 0);
+        const vector cV_y_(-sin(degToRad($gV_alpha_DEG)), cos(degToRad($gV_alpha_DEG)), 0);
+
+        vector F_m = -m * $gV_U_inf * cV_x_;
+        scalar F_L_m = (F + F_m) & cV_y_;
+        scalar F_D_m = (F + F_m) & cV_x_;
+        scalar c_L_m = F_L_m/(0.5 * rho * $gV_U_inf * Area);
+        scalar c_D_m = F_D_m/(0.5 * rho * $gV_U_inf * Area);
+
+        scalar F_L = F & cV_y_;
+        scalar F_D = F & cV_x_;
+
+        scalar c_L = F_L/(0.5 * rho * $gV_U_inf * Area);
+        scalar c_D = F_D/(0.5 * rho * $gV_U_inf * Area);
+
+        // === 4. resultDict schreiben ===
+        IOdictionary resultDict
+        (
+            IOobject
+            (
+                "CVforces",
+                mesh().time().timeName(),
+                mesh(), IOobject::NO_READ,
+                IOobject::AUTO_WRITE
+            )
+        );
+        
+        resultDict.add("pressureForce", Fp);
+        resultDict.add("viscousForce", Fv);
+        resultDict.add("convectiveForce", Fc);
+        resultDict.add("totalForce", F);
+        resultDict.add("c_L", c_L);
+        resultDict.add("c_D", c_D);
+        resultDict.add("m_error", m);
+        resultDict.add("c_L_m", c_L_m);
+        resultDict.add("c_D_m", c_D_m);
+
+        resultDict.regIOobject::write();
+        
+        Info<< "CV force integration done." << endl;
+    #};
+}
+// ************************************************************************* /

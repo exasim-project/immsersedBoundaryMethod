@@ -1,0 +1,13 @@
+Info zu IBMSimpleFoam:
+
+In creatFields.H wird U und phi initial auf 0 gesetzt um IBM.
+
+In IBMSimpleFoam.C können Flüsse über IBM Grenzen und Kontinuität innerhalb der Zellen betrachtet werden.
+
+Falls phi in der IBM und an den IBM faces maskiert werden soll alle Zeilen wo steht
+// Wenn phiHbyA = 0 sein soll in und um IBM:
+auskommentieren.
+Falls phi interpoliert werden soll in fvSchemes/interpolationSchemes die Zeile:
+flux(HbyA)      IBMlinear;
+hinzufügen.
+Falls HbyA einmalig zu 0 gesetzt werden soll anstatt interpoliert zu werden kann auch in src/IBMlinear.C die jeweilige Variante auskommentiert werden.

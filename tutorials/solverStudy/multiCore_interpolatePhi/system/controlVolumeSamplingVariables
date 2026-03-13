@@ -1,0 +1,43 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  7
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+Description
+    This file contains parameter definitions used to define the case's 
+    boundary conditions, coefficient calculation, etc.
+    All variables start with prefix "gV_" to easily identify them in other files
+    and to avoid accidentical variable overrides
+
+\*---------------------------------------------------------------------------*/
+
+// To include this file to any other dictionary: include "controlVolumeSamplingVariables"
+
+// Define control volume:
+center_x 0.5;
+center_y 0;
+center_z 0.5;
+
+x_lenght 20;
+y_lenght 20;
+
+pointsPerLenght 1000;
+
+// Calculations:
+x_min #eval "$center_x - $x_lenght/2";
+x_max #eval "$center_x + $x_lenght/2";
+y_min #eval "$center_y - $y_lenght/2";
+y_max #eval "$center_y + $y_lenght/2";
+
+deltaS #eval "1/$pointsPerLenght";
+x_upperCorner #eval "$x_max - $deltaS/2";
+x_lowerCorner #eval "$x_min + $deltaS/2";
+y_upperCorner #eval "$y_max - $deltaS/2";
+y_lowerCorner #eval "$y_min + $deltaS/2";
+
+nPointsX #eval "$x_lenght * $pointsPerLenght";
+nPointsY #eval "$y_lenght * $pointsPerLenght";
+
+// ************************************************************************* //
